@@ -108,3 +108,4 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 // ------ End :: Logic for context menus :: End -------
+
