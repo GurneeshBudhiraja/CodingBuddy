@@ -3,6 +3,7 @@ let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
 
+
 // ------ Start ::  Logic for finding the tab URL :: Start ------------
 
 // retrieving the updated tab URL
@@ -108,4 +109,3 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 // ------ End :: Logic for context menus :: End -------
-

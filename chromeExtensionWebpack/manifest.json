@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Clipboard Copier with Icon",
+  "icons": {
+    "16": "./gemini.png",
+    "48": "./gemini.png",
+    "128":"./gemini.png" 
+  },
+  "name": "Coding Buddy",
   "version": "1.0",
-  "description": "Copy text to clipboard from background script with icon in context menu.",
+  "description": "Coding Buddy",
   "permissions": [
     "contextMenus",
     "scripting",
@@ -20,7 +25,7 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "index.html"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

@@ -83,3 +83,12 @@ function resetIdleTimeFunction(){
 }
 
 // ------- End :: Handling Idle Time :: End -------
+
+
+chrome.runtime.sendMessage({ action: 'signIn' }, (response) => {
+  if (response.user) {
+    console.log('User signed in:', response.user);
+  } else {
+    console.error('Error signing in:', response.error);
+  }
+});
