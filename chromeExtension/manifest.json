@@ -1,0 +1,32 @@
+{
+"manifest_version": 3,
+"icons": {
+    "16": "./static/gemini.png",
+    "48": "./static/gemini.png",
+    "128":"./static/gemini.png" 
+},
+"name": "Coding Buddy",
+"version": "1.0",
+"description": "Coding Buddy",
+"permissions": [
+    "contextMenus",
+    "scripting",
+    "tabs",
+    "storage"
+],
+"background": {
+    "service_worker": "background.js"
+},
+"content_scripts": [
+    {
+    "matches": ["<all_urls>"],
+    "js": ["contentScript.js"]
+    }
+],
+"action": {
+    "default_popup": "index.html"
+},
+"content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+}
+}

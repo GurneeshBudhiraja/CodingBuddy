@@ -1,44 +1,38 @@
-let tabID=undefined; // current tabId
+let tabID = undefined; // current tabId
 let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
 
 
 // -------- Start :: Adding Message Listeners :: Start ------------
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  if(request.type==="emailSignIn"){
-    chrome.tabs.create({url: "./login.html"});
-  } else if(request.type==="checkUser"){
-    const localStorage = await chrome.storage.sync.get(["uid","accessToken"]);
-    console.log("Local storage is",localStorage);
-    if(localStorage.uid && localStorage.accessToken){
-      sendResponse({items, isAuthenticated:true});
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === "emailSignIn") {
+        chrome.tabs.create({ url: "./login/login.html" });
     }
-  }
-});
+  });
+  
 
 // -------- End :: Adding Message Listeners :: End ------------
-
 
 // ------ Start ::  Logic for finding the tab URL :: Start ------------
 
 // retrieving the updated tab URL
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if(changeInfo.status == 'complete'){
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.status == "complete") {
     clearTimeout(startTimer); // clearing the timer
     startTimer = setTimeout(() => {
-    logTabURL(tabId);
-    }, 20000); 
+      logTabURL(tabId);
+    }, 20000);
   }
-}); 
+});
 
 // retrieving the activated tab URL
-chrome.tabs.onActivated.addListener(function(activeInfo) {
-  const {tabId} = activeInfo;
-  clearTimeout(startTimer); // clearing the timer 
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+  const { tabId } = activeInfo;
+  clearTimeout(startTimer); // clearing the timer
   startTimer = setTimeout(() => {
     logTabURL(tabId);
-  },20000);
+  }, 20000);
 });
 
 // set for preventing duplicate tab URL
@@ -49,56 +43,70 @@ function logTabURL(tabId) {
   let deletingSetElementTimeout;
   clearTimeout(deletingSetElementTimeout); // clearing the timeout
 
-  if(tabIdSet.has(tabId)) return; // checking if the tabId is already present in the set
+  if (tabIdSet.has(tabId)) return; // checking if the tabId is already present in the set
   tabIdSet.add(tabId);
-  console.log("Tabidset after adding is",tabIdSet);
-  chrome.tabs.get(tabId, function(tab){
+  console.log("Tabidset after adding is", tabIdSet);
+  chrome.tabs.get(tabId, function (tab) {
     // checking if the url exists
-    if(tab?.url){
+    if (tab?.url) {
       tabURL = tab.url;
       tabID = tab.id;
     }
   });
-  setTimeout(()=>appendVisitedURLs(tabID,tabURL), 1000);
-
+  setTimeout(() => appendVisitedURLs(tabID, tabURL), 1000);
 
   // setting a timeout to delete the tabId from the set after 1 second
   deletingSetElementTimeout = setTimeout(() => {
     tabIdSet.delete(tabId);
-    console.log("Tabidset after deletion is",tabIdSet); 
+    console.log("Tabidset after deletion is", tabIdSet);
   }, 1000);
   return;
-} 
+}
 
 // ------ End :: Logic for sending the tab URL :: End ------------
 
 // ----- Start :: Logic for appending the URL to the visitedURLs :: Start -------
-async function appendVisitedURLs(tabID,tabURL){
+async function appendVisitedURLs(tabID, tabURL) {
   try {
     let isYoutubeURL = false;
     let youtubeVideoId = null;
     let youtubeVideoTitle = null;
-    
-    if(tabURL && (tabURL.includes("chrome://") || !tabURL.trim().length)) return; // checking if the URL is a chrome URL or empty
-  
-    if(tabURL.includes("https://www.youtube.com/watch?v=")){
+
+    if (tabURL && (tabURL.includes("chrome://") || !tabURL.trim().length))
+      return; // checking if the URL is a chrome URL or empty
+
+    if (tabURL.includes("https://www.youtube.com/watch?v=")) {
       isYoutubeURL = true;
       youtubeVideoId = tabURL.split("https://www.youtube.com/watch?v=")[1];
-      const resp = await new Promise((resolve,reject)=>{
-          chrome.tabs.sendMessage(tabID, {task: "retrieveYoutubeVideoTitle"},(resp)=>{
+      const resp = await new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(
+          tabID,
+          { task: "retrieveYoutubeVideoTitle" },
+          (resp) => {
             if (chrome.runtime.lastError || !resp) {
-              console.error("Error retrieving YouTube title:", chrome.runtime.lastError); 
+              console.error(
+                "Error retrieving YouTube title:",
+                chrome.runtime.lastError
+              );
               resolve(null);
-            } else{
+            } else {
               resolve(resp);
             }
-        })
-      }) 
+          }
+        );
+      });
       youtubeVideoTitle = resp?.response;
-    } 
+    }
     const date = new Date().toLocaleString();
-    visitedURLs.unshift({tabID,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId,date});
-    console.log("Visited URLs are",visitedURLs);
+    visitedURLs.unshift({
+      tabID,
+      tabURL,
+      isYoutubeURL,
+      youtubeVideoTitle,
+      youtubeVideoId,
+      date,
+    });
+    console.log("Visited URLs are", visitedURLs);
     return;
   } catch (error) {
     console.log(error);
@@ -113,23 +121,19 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "copyCodeSnippet",
     title: "Copy Code Snippet",
-    contexts: ["selection"]
+    contexts: ["selection"],
   });
+  chrome.tabs.create({ url: "./login/login.html" });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "copyCodeSnippet") {
-    const {selectionText} = info;
-    const resp = await chrome.tabs.sendMessage(tab.id,{task:"copyCodeSnippet",codeSnippet:selectionText});
+    const { selectionText } = info;
+    const resp = await chrome.tabs.sendMessage(tab.id, {
+      task: "copyCodeSnippet",
+      codeSnippet: selectionText,
+    });
   }
 });
 
 // ------ End :: Logic for context menus :: End -------
-
-
-// ------ Start :: Logic for authentication on extension install/update :: Start -------
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.tabs.create({url: "./login.html"});
-});
-
-// ------ End :: Logic for authentication on extension install/update :: End -------

@@ -2,14 +2,8 @@ import React from 'react'
 
 function GoogleSignin() {
   const handleSignIn = () => {
-    chrome.runtime.sendMessage({ action: 'signIn' }, (response) => {
-      if (response.user) {
-        console.log('User signed in:', response.user);
-        alert('Sign-in successful!');
-      } else {
-        console.error('Error signing in:', response.error);
-        alert('Sign-in failed: ' + response.error);
-      }
+    chrome.runtime.sendMessage({ type: 'googleSignIn' }, function (response) {
+      console.log(response);
     });
   };
   return (

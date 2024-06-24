@@ -30,6 +30,10 @@ export default {
           from: path.resolve("./src/static"),
           to: path.resolve("dist"),
         },
+        {
+          from: path.resolve("./src/login"),
+          to: path.resolve("dist"),
+        },
       ],
     }),
   ],
