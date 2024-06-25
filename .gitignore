@@ -1,3 +1,4 @@
 node_modules
 chromeExtensionWebpack/dist
 .env
+firebaseAdmin.json
