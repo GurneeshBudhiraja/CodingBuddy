@@ -1,45 +1,77 @@
-const submitGoalButton  = document.getElementById("submitGoal");
+import { getUserGoalAPI, submitUserGoalAPI } from "./api.js";
+const submitGoalButton = document.getElementById("submitGoal");
 const goalInput = document.getElementById("goalInput");
 let uid = null;
 let accessToken = null;
-
+let userGoal = null;
 console.log("Hello from index.js!");
 
 const signInButton = document.getElementById("signInWithEmail");
 
 (async () => {
-    const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
-    uid = localStorage.uid;
-    accessToken = localStorage.accessToken;
-    console.log("uid:", uid);
-    console.log("accessToken:", accessToken);
+  const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
+  uid = localStorage.uid;
+  accessToken = localStorage.accessToken;
+  console.log("uid:", uid);
+  if (uid) {
+    try {
+      goalInput.placeholder = "Loading goal...";
+      goalInput.disabled = true;
+      const userGoalObject = await fetch(`${getUserGoalAPI}/${uid}`);
+      userGoal = await userGoalObject.json();
+      if (userGoal.uid === uid && userGoal.goal) {
+        goalInput.value = userGoal.goal;
+        goalInput.disabled = true;
+      } else {
+        goalInput.placeholder = "What's your goal for today?";
+        goalInput.disabled = false;
+      }
+      return;
+    } catch (error) {
+      console.log("Error fetching user goal:", error.message);
+      goalInput.placeholder = "What's your goal for today?";
+      goalInput.disabled = false;
+    }
+  }
 })();
 
 (() => {
-    submitGoalButton.addEventListener("click", async () => {
-        console.log("Submit goal button clicked");
-        const goal = goalInput.value;
-        if (goal) {
-            console.log("Goal entered:", goal);
-            goalInput.value = goal;
-            goalInput.disabled = true;
-            await chrome.storage.sync.set({ goal });
-            chrome.storage.sync.get(["goal"], (resp) => {
-                console.log("Goal saved in storage:", resp);
-            });
-        } else {
-            alert("Please enter a goal");
-        }
-    });
-
-    goalInput.addEventListener("focus", () => {
+  submitGoalButton.addEventListener("click", async () => {
+    console.log("Submit goal button clicked");
+    const goal = goalInput.value;
+    if (goal) {
+      try {
+        console.log("Goal entered:", goal);
+        goalInput.value = goal;
+        goalInput.disabled = true;
+        const response = await fetch(submitUserGoalAPI, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+            body: JSON.stringify({
+            uid: uid,
+            goal: goal,
+          }),
+        });
+        const data = await response.json();
+        console.log("Response from server:", data);
+        return;
+      } catch (error) {
+        console.log("Error submitting goal:", error.message);
+        alert("Error submitting goal. Please try again.");
         goalInput.disabled = false;
-    });
+        goalInput.placeholder = "What's your goal for today?";
+      }
+    } else {
+      alert("Please enter a goal");
+    }
+  });
 })();
 
 signInButton.addEventListener("click", () => {
-    console.log("Sign in with email button clicked");
-    chrome.runtime.sendMessage({ type: "emailSignIn" }, (resp) => {
-        alert("Response from background.js: " + resp);
-    });
+  console.log("Sign in with email button clicked");
+  chrome.runtime.sendMessage({ type: "emailSignIn" }, (resp) => {
+    alert("Response from background.js: " + resp);
+  });
 });
