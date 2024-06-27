@@ -1,5 +1,3 @@
-import { getUserGoalAPI, submitUserGoalAPI } from "./api.js";
-const submitGoalButton = document.getElementById("submitGoal");
 const goalInput = document.getElementById("goalInput");
 let uid = null;
 let accessToken = null;
@@ -17,7 +15,7 @@ const signInButton = document.getElementById("signInWithEmail");
     try {
       goalInput.placeholder = "Loading goal...";
       goalInput.disabled = true;
-      const userGoalObject = await fetch(`${getUserGoalAPI}/${uid}`);
+      const userGoalObject = await fetch(`http://localhost:3000/db/getgoal/${uid}`);
       userGoal = await userGoalObject.json();
       if (userGoal.uid === uid && userGoal.goal) {
         goalInput.value = userGoal.goal;
@@ -35,16 +33,15 @@ const signInButton = document.getElementById("signInWithEmail");
   }
 })();
 
-(() => {
-  submitGoalButton.addEventListener("click", async () => {
-    console.log("Submit goal button clicked");
+
+document.querySelector("#submitGoal").addEventListener("click", async () => {
     const goal = goalInput.value;
     if (goal) {
       try {
         console.log("Goal entered:", goal);
         goalInput.value = goal;
         goalInput.disabled = true;
-        const response = await fetch(submitUserGoalAPI, {
+        const response = await fetch("http://localhost:3000/db/addgoal/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -67,11 +64,15 @@ const signInButton = document.getElementById("signInWithEmail");
       alert("Please enter a goal");
     }
   });
-})();
+
 
 signInButton.addEventListener("click", () => {
   console.log("Sign in with email button clicked");
   chrome.runtime.sendMessage({ type: "emailSignIn" }, (resp) => {
     alert("Response from background.js: " + resp);
   });
+});
+
+document.querySelector("#submitGoal").addEventListener("click", async () => {
+  alert("Submit goal button clicked");
 });

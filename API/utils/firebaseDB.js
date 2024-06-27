@@ -27,3 +27,18 @@ export const getGoalFromFirestore = async(uid)=>{
         return error;
     }
 }
+
+
+export const addCodeSnippetToFirestore = async(uid,codeSnippet)=>{
+    try {
+        if(!uid || !codeSnippet) throw new Error("uid and codeSnippet are required");
+        const data = {
+            uid,
+            codeSnippet,
+            createdAt: Timestamp.now()
+        }
+        return await addDoc(collection(db,"codeSnippets"),data);
+    } catch (error) {
+        return error.message;
+    }
+} 

@@ -127,12 +127,37 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === "copyCodeSnippet") {
-    const { selectionText } = info;
-    const resp = await chrome.tabs.sendMessage(tab.id, {
-      task: "copyCodeSnippet",
-      codeSnippet: selectionText,
-    });
+  try {
+    if (info.menuItemId === "copyCodeSnippet") {
+      const { selectionText } = info;
+      // will send the code to the gemini api first to verify is it the actual code snippet :: will do it later 
+      console.log("Code snippet copied:", selectionText);
+      if(!(selectionText)){
+        chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+        return;
+      };
+      const {uid} = await chrome.storage.sync.get(["uid"]);
+      if(!uid){
+        alert("No uid is found. Please sign in first.");
+        chrome.tabs.create({ url: "./login/login.html" });
+        return;
+      } 
+      const response = await fetch("http://localhost:3000/db/addsnippet/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uid,
+          codeSnippet: selectionText,
+        }),
+      });
+      const data = await response.json();
+      chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});
+      console.log("Code snippet copied successfully",data);
+    }
+  } catch (error) {
+    console.log("Error copying code snippet:", error.message);
   }
 });
 

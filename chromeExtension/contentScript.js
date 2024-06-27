@@ -11,18 +11,16 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse)=>{
       sendResponse({response:"Error in setTimeout function"});
     }
     return true;
-  } else if(request.task==="copyCodeSnippet"){ // copying the code snippet to the clipboard
+  } else if(request.task==="invalidCodeSnippet"){ // copying the code snippet to the clipboard
     try {
-      const {codeSnippet} = request;
-      navigator.clipboard.writeText(codeSnippet);
-      alert("Code snippet copied to clipboard!");
-      sendResponse({response:true});
+      alert("Please select the code snippet to store in firestore!");
+      sendResponse({status:"alertShown"});
     } catch (error) {
-      sendResponse({response:false});
-      console.log("Error while copying to clipboard :: ",error.message);
-      alert("Error while copying to clipboard!");
+      console.log("Error while showing the alert box!");
     }
     return true;
+  } else if(request.task==="codeSnippetStored"){
+    alert("Code snippet copied successfully!");
   }
 })
 
