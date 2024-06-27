@@ -7,9 +7,13 @@ export const addGoalToFirestore = async(collectionName,data={})=>{
         if(!Object.keys(data).length===0 || !collectionName) throw new Error("Data and collection name are required");
         const time = Timestamp.now();
         data["createdAt"] = time; // adding the timestamp to the data
-        return await addDoc(collection(db,collectionName),data);
+        const resp = await getGoalFromFirestore(data.uid);
+        if(Object.keys(resp).length===0){
+            return await addDoc(collection(db,collectionName),data);
+        }
+        return resp;
     } catch (error) {
-        return error;
+        return error.message;
     }
 }
 

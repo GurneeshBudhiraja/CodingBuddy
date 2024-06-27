@@ -28,9 +28,9 @@ router.post("/addgoal",async (req,res)=>{
             return res.status(400).json({"error :: addgoal route": "goal and uid are required"});
         }
         const resp = await addGoalToFirestore(collectionName,{goal,uid});
-        return res.status(200).json(resp.id);
+        return res.status(200).json(resp);
     } catch (error) {
-        return res.status(500).json({"error :: addgoal route": error.message});
+        return res.status(500).json({"error :: addgoal route": error});
     }
 });
 router.get("/getgoal/:id",async(req,res)=>{
