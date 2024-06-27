@@ -14,21 +14,20 @@ const signInButton = document.getElementById("signInWithEmail");
   if (uid) {
     try {
       goalInput.placeholder = "Loading goal...";
-      goalInput.disabled = true;
+
       const userGoalObject = await fetch(`http://localhost:3000/db/getgoal/${uid}`);
       userGoal = await userGoalObject.json();
       if (userGoal.uid === uid && userGoal.goal) {
         goalInput.value = userGoal.goal;
-        goalInput.disabled = true;
+
       } else {
         goalInput.placeholder = "What's your goal for today?";
-        goalInput.disabled = false;
+
       }
       return;
     } catch (error) {
       console.log("Error fetching user goal:", error.message);
       goalInput.placeholder = "What's your goal for today?";
-      goalInput.disabled = false;
     }
   }
 })();
@@ -40,7 +39,6 @@ document.querySelector("#submitGoal").addEventListener("click", async () => {
       try {
         console.log("Goal entered:", goal);
         goalInput.value = goal;
-        goalInput.disabled = true;
         const response = await fetch("http://localhost:3000/db/addgoal/", {
           method: "POST",
           headers: {
@@ -57,7 +55,7 @@ document.querySelector("#submitGoal").addEventListener("click", async () => {
       } catch (error) {
         console.log("Error submitting goal:", error.message);
         alert("Error submitting goal. Please try again.");
-        goalInput.disabled = false;
+
         goalInput.placeholder = "What's your goal for today?";
       }
     } else {

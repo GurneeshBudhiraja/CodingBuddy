@@ -1,4 +1,4 @@
-import { collection, addDoc, query,where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, addDoc, query,where, getDocs, Timestamp, updateDoc, doc } from "firebase/firestore";
 import db from "../firebaseConfig.js";
 
 
@@ -10,8 +10,14 @@ export const addGoalToFirestore = async(collectionName,data={})=>{
         const resp = await getGoalFromFirestore(data.uid);
         if(Object.keys(resp).length===0){
             return await addDoc(collection(db,collectionName),data);
+        } else{
+            const docRef = doc(db,collectionName,resp.id);
+            await updateDoc(docRef,{
+                goal: data.goal,
+                createdAt: time
+            });
+            return "Goal updated successfully";
         }
-        return resp;
     } catch (error) {
         return error.message;
     }
@@ -25,6 +31,7 @@ export const getGoalFromFirestore = async(uid)=>{
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
             resp = doc.data();
+            resp["id"] = doc.id;
         });
         return resp;
     } catch (error) {
