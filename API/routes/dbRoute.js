@@ -1,5 +1,5 @@
 import express, { query } from 'express';
-import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore } from '../utils/firebaseDB.js';
+import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore } from '../controllers/firebaseDB.controller.js';
 
 
 const router = express.Router();
@@ -28,7 +28,6 @@ router.post("/addgoal",async (req,res)=>{
             return res.status(400).json({"error :: addgoal route": "goal and uid are required"});
         }
         const resp = await addGoalToFirestore(collectionName,{goal,uid});
-        console.log("resp in dbRoute ::",resp);
         return res.status(200).json({resp});
     } catch (error) {
         return res.status(500).json({"error :: addgoal route": error});
@@ -53,6 +52,11 @@ router.post("/addsnippet",async (req,res)=>{
             return res.status(400).json({"error :: addsnippet route": "uid and codeSnippet are required"});
         } else{
             const resp = await addCodeSnippetToFirestore(uid,codeSnippet);
+
+            if(!resp) {
+                return res.status(400).json({codeSnippet:false});
+            };
+            
             return res.status(200).json({resp: resp["id"]});
         }
     } catch (error) {

@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { createAccount, authenticateAccount, getCurrentUser } from '../utils/firebaseAuth.js';
+import { createAccount, authenticateAccount, getCurrentUser } from '../controllers/firebaseAuth.controller.js';
 router.post("/signup",async (req,res)=>{
     try {
         const {email,password} = req.body;

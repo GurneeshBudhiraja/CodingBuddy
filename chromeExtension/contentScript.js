@@ -21,6 +21,8 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse)=>{
     return true;
   } else if(request.task==="codeSnippetStored"){
     alert("Code snippet copied successfully!");
+  } else if(request.task==="invalidCodeSnippet"){
+    alert("Please select the code snippet to store in firestore!");
   }
 })
 

@@ -1,6 +1,6 @@
 import { collection, addDoc, query,where, getDocs, Timestamp, updateDoc, doc } from "firebase/firestore";
 import db from "../firebaseConfig.js";
-
+import {checkCodeSnippet} from "../utils/utils.js";
 
 export const addGoalToFirestore = async(collectionName,data={})=>{
     try {
@@ -43,12 +43,22 @@ export const getGoalFromFirestore = async(uid)=>{
 export const addCodeSnippetToFirestore = async(uid,codeSnippet)=>{
     try {
         if(!uid || !codeSnippet) throw new Error("uid and codeSnippet are required");
-        const data = {
-            uid,
-            codeSnippet,
-            createdAt: Timestamp.now()
+        const geminiCheckCodeSnippetResponse = await checkCodeSnippet(codeSnippet);
+        const geminiJSObject = JSON.parse(geminiCheckCodeSnippetResponse);
+        console.log("geminiJSObject",geminiJSObject);
+
+        if(geminiJSObject["isCodePresent"]===false) return false;
+        else if(geminiJSObject["isCodePresent"]===true){
+            const {code,shortName} = geminiJSObject;
+
+            const data = {
+                uid,
+                code,
+                createdAt: Timestamp.now(),
+                shortName,
+            }
+            return await addDoc(collection(db,"codeSnippets"),data);
         }
-        return await addDoc(collection(db,"codeSnippets"),data);
     } catch (error) {
         return error.message;
     }

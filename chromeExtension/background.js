@@ -153,8 +153,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }),
       });
       const data = await response.json();
+      if(data["codeSnippet"]===false){
+        chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+        return;
+      }
       chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});
-      console.log("Code snippet copied successfully",data);
     }
   } catch (error) {
     console.log("Error copying code snippet:", error.message);
