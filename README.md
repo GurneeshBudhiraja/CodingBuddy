@@ -1,1 +1,1 @@
-# Coding Buddy using Gemini API
+# Coding Buddy
