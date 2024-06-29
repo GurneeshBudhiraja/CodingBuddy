@@ -71,6 +71,7 @@ async function appendVisitedURLs(tabID, tabURL) {
     let isYoutubeURL = false;
     let youtubeVideoId = null;
     let youtubeVideoTitle = null;
+    let relevance = 0; // 0 means neutral, 1 means relevant, -1 means irrelevant
 
     if (tabURL && (tabURL.includes("chrome://") || !tabURL.trim().length))
       return; // checking if the URL is a chrome URL or empty
@@ -97,14 +98,30 @@ async function appendVisitedURLs(tabID, tabURL) {
       });
       youtubeVideoTitle = resp?.response;
     }
-    const date = new Date().toLocaleString();
+    const dateTimeOfVisit = new Date().toLocaleString();
+    const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
+    const uid = localStorage.uid; //getting the uid from the local storage
+    const geminiAPIResponse = await fetch("http://localhost:3000/gemini/checkGoalRelevance/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      },
+      body:JSON.stringify({
+        uid,
+        tabURL,
+        youtubeTitle: youtubeVideoTitle || null,
+      }),
+    });
+    const geminiJSObject = await geminiAPIResponse.json();
+    relevance = geminiJSObject.relevance;
     visitedURLs.unshift({
       tabID,
       tabURL,
       isYoutubeURL,
       youtubeVideoTitle,
       youtubeVideoId,
-      date,
+      dateTimeOfVisit,
+      relevance,
     });
     console.log("Visited URLs are", visitedURLs);
     return;

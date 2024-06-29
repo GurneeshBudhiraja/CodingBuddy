@@ -1,6 +1,6 @@
 import { collection, addDoc, query,where, getDocs, Timestamp, updateDoc, doc } from "firebase/firestore";
 import db from "../firebaseConfig.js";
-import {checkCodeSnippet} from "../utils/utils.js";
+import {checkCodeSnippet} from "./gemini.controller.js";
 
 export const addGoalToFirestore = async(collectionName,data={})=>{
     try {

@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import authRoute from "./routes/authRoute.js";
-import dbRoute from "./routes/dbRoute.js";
+import authRoute from "./routes/auth.route.js";
+import dbRoute from "./routes/db.route.js";
+import geminiRoute from "./routes/gemini.route.js";
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 
@@ -22,6 +23,7 @@ app.get('/test', (req, res) => {
 
 app.use("/auth",authRoute);
 app.use("/db",dbRoute);
+app.use("/gemini",geminiRoute);
 
 
 app.listen(port, () => {
