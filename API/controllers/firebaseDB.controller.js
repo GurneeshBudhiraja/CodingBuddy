@@ -63,3 +63,21 @@ export const addCodeSnippetToFirestore = async(uid,codeSnippet)=>{
         return error.message;
     }
 } 
+
+export const addVisitedURL=async(collectionName,data)=>{
+    try {
+        const {uid, ...dataForFirestore} = data;
+        if(!uid) throw new Error("uid is required");
+        const userDocRef = doc(db, collectionName, uid);
+        const urlEntriesCollection = collection(userDocRef, "urlEntries");
+        const firestoreRespData = await addDoc(urlEntriesCollection, {
+            createdAt: Timestamp.now(),
+            ...dataForFirestore
+        });
+        console.log("firestoreRespData",firestoreRespData.id);
+        return firestoreRespData.id;
+
+    } catch (error) {
+        return error.message;
+    }
+}

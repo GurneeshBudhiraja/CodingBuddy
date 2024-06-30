@@ -1,5 +1,5 @@
 import express, { query } from 'express';
-import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore } from '../controllers/firebaseDB.controller.js';
+import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore,addVisitedURL } from '../controllers/firebaseDB.controller.js';
 
 
 const router = express.Router();
@@ -63,6 +63,23 @@ router.post("/addsnippet",async (req,res)=>{
         return res.status(500).json({"error :: addsnippet route": error.message});
     }
 });
+
+router.post("/addVisitedURL/:id",async(req,res)=>{
+    try {
+        const uid = req.params.id;
+        // checking for uid
+        if(!uid) return res.status(400).json({"error :: addVisitedURL route": "uid is required"});
+        if(Object.keys(req.body).length!==5) return res.status(400).json({"error :: addVisitedURL route": "Incomplete data sent. Try Again."});
+        const {tabURL,youtubeTitle,youtubeId,popupTime,timeOfExitOrStay} = req.body;
+        console.log(req.body, "uid is",uid);
+        const collectionName = "visitedURL";
+        const resp = await addVisitedURL(collectionName,{uid,tabURL,youtubeTitle,youtubeId,popupTime,timeOfExitOrStay});
+        return res.status(200).json({resp});
+
+    } catch (error) {
+        return res.status(500).json({"error :: addVisitedURL route": error.message});
+    }
+})
 
 
 

@@ -70,7 +70,7 @@ signInButton.addEventListener("click", () => {
     alert("Response from background.js: " + resp);
   });
 });
-
+  
 document.querySelector("#submitGoal").addEventListener("click", async () => {
   alert("Submit goal button clicked");
 });

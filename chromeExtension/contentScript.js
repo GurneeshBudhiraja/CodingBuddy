@@ -1,7 +1,8 @@
 console.log("Content script is running for the gemini competition!");
 
+
 // Message listener for the content script
-chrome.runtime.onMessage.addListener((request,sender,sendResponse)=>{
+chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
   console.log("From content script message");
   if(request.task==="retrieveYoutubeVideoTitle"){ // retrieving the youtube video title
     try {
@@ -23,6 +24,54 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse)=>{
     alert("Code snippet copied successfully!");
   } else if(request.task==="invalidCodeSnippet"){
     alert("Please select the code snippet to store in firestore!");
+  } else if(request.task==="irrelevantURL"){
+    try {
+      /* 
+      {
+        "task": "irrelevantURL",
+        "uid": "DBnQDnqjbDMq6PdDd8OslrCrEQF3",
+        "tabURL": "https://www.youtube.com/watch?v=H5aFWHIeUJo",
+        "isYoutubeURL": true,
+        "youtubeVideoTitle": "IND vs SA | ICC T20 World Cup 2024 Final - Virat Kohli Retires… - Tabish Hashmi - Haarna Mana Hay",
+        "youtubeVideoId": "H5aFWHIeUJo"
+        }
+        */
+      if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();
+      
+      const popupTime = new Date().toUTCString();
+      const resp = await createPopup("The URL is irrelevant. Do you want to exit?");
+      console.log("showPopupTime is :: ",popupTime);
+      console.log("resp is :: ",resp);
+      if(resp){
+        chrome.runtime.sendMessage({didExit:true,popupTime,...request});
+      } else{
+        if(request.isYoutubeURL) document.getElementsByTagName("video")[0].play();
+        const stayTime = new Date().toUTCString();
+        console.log("stayTime is :: ",stayTime);
+        chrome.runtime.sendMessage({didExit:false,popupTime,stayTime,...request});
+      }
+    } catch (error) {
+      console.log(error.message)
+    }
+    return true;
+  } else if(request.task==="neutralURL"){
+    try {
+      if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();
+      const popupTime = new Date().toUTCString();
+      const resp = await createPopup("The URL can be irrelevant. Do you want to exit?");
+      console.log("showPopupTime is :: ",popupTime);
+      if(resp){
+        chrome.runtime.sendMessage({didExit:true,popupTime,...request});
+      } else{
+        if(request.isYoutubeURL) document.getElementsByTagName("video")[0].play();
+        const stayTime = new Date().toUTCString();
+        console.log("stayTime is :: ",stayTime);
+        chrome.runtime.sendMessage({didExit:false,popupTime,stayTime,...request});
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+    return true;
   }
 })
 
@@ -83,3 +132,50 @@ function resetIdleTimeFunction(){
 }
 
 // ------- End :: Handling Idle Time :: End -------
+
+
+// -------- Start :: utils function for the content script :: Start --------
+function createPopup(msg) {
+  return new Promise((resolve) => {
+    // Create a container div for the popup
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.left = '50%';
+    popup.style.top = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.border = '1px solid #000';
+    popup.style.backgroundColor = '#fff';
+    popup.style.padding = '20px';
+    popup.style.zIndex = '1000';
+
+    // Create a message paragraph
+    const message = document.createElement('p');
+    message.innerText = msg;
+    popup.appendChild(message);
+
+    // Create the Exit button
+    const exitButton = document.createElement('button');
+    exitButton.innerText = 'Exit';
+    exitButton.onclick = function() {
+      document.body.removeChild(popup);
+      resolve(true);
+    };
+    popup.appendChild(exitButton);
+
+    // Create the Ignore button
+    const ignoreButton = document.createElement('button');
+    ignoreButton.innerText = 'Ignore';
+    ignoreButton.style.marginLeft = '10px';
+    ignoreButton.onclick = function() {
+      document.body.removeChild(popup);
+      resolve(false);
+    };
+    popup.appendChild(ignoreButton);
+
+    // Add the popup to the body
+    document.body.appendChild(popup);
+  });
+}
+
+
+// -------- End :: utils function for the content script :: End --------

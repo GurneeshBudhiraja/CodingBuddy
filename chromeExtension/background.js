@@ -5,10 +5,55 @@ let startTimer; // timer to check the visited URL after 20 seconds
 
 
 // -------- Start :: Adding Message Listeners :: Start ------------
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.type === "emailSignIn") {
         chrome.tabs.create({ url: "./login/login.html" });
+    } else if(request.task==="irrelevantURL"){
+      console.log("Background.js :: The URL is irrelevant. Exiting the tab",request);
+      if(request.didExit) {
+        request["exitTime"] = new Date().toUTCString();
+        chrome.tabs.remove(tabID);
+      };
+      console.log("Background.js :: The URL is irrelevant",request);
+      const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          tabURL:request.tabURL,
+          youtubeTitle:request.youtubeVideoTitle,
+          youtubeId:request.youtubeVideoId,
+          popupTime:request.popupTime,
+          timeOfExitOrStay:request.didExit?request.exitTime:request.stayTime, //only one will be available at a time
+        }),
+      })
+      const data = await resp.json();
+      console.log(data);
+
+    } else if(request.task==="neutralURL"){
+      if(request.didExit){
+        request["exitTime"] = new Date().toUTCString();
+        chrome.tabs.remove(tabID);
+      };
+      console.log("Background.js :: The URL is neutral",request);
+      const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          tabURL:request.tabURL,
+          youtubeTitle:request.youtubeVideoTitle,
+          youtubeId:request.youtubeVideoId,
+          popupTime:request.popupTime,
+          timeOfExitOrStay:request.didExit?request.exitTime:request.stayTime, //only one will be available at a time
+        }),
+      })
+      const data = await resp.json();
+      console.log(data);
     }
+    return true;
   });
   
 
@@ -114,15 +159,22 @@ async function appendVisitedURLs(tabID, tabURL) {
     });
     const geminiJSObject = await geminiAPIResponse.json();
     relevance = geminiJSObject.relevance;
-    visitedURLs.unshift({
-      tabID,
-      tabURL,
-      isYoutubeURL,
-      youtubeVideoTitle,
-      youtubeVideoId,
-      dateTimeOfVisit,
-      relevance,
-    });
+    console.log(relevance);
+    if(relevance===1){
+      visitedURLs.unshift({
+        tabID,
+        tabURL,
+        isYoutubeURL,
+        youtubeVideoTitle,
+        youtubeVideoId,
+        dateTimeOfVisit,
+        relevance:"relevant",
+      });
+    } else if(relevance===-1){
+      chrome.tabs.sendMessage(tabID,{task:"irrelevantURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId}); 
+    } else{
+      chrome.tabs.sendMessage(tabID,{task:"neutralURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId});
+    }
     console.log("Visited URLs are", visitedURLs);
     return;
   } catch (error) {
