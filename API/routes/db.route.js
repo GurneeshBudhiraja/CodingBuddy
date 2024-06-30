@@ -1,5 +1,5 @@
 import express, { query } from 'express';
-import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore,addVisitedURL } from '../controllers/firebaseDB.controller.js';
+import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore,addVisitedURL,addIdleTimeData } from '../controllers/firebaseDB.controller.js';
 
 
 const router = express.Router();
@@ -79,6 +79,24 @@ router.post("/addVisitedURL/:id",async(req,res)=>{
         return res.status(500).json({"error :: addVisitedURL route": error.message});
     }
 })
+
+router.post("/addIdleTime/:id",async(req,res)=>{
+    try {
+        const uid = req.params.id;
+        if(!uid) return res.status(400).json({"error :: addIdleTime route": "uid is required"});
+        const {idleTime,endTime,URL} = req.body;
+        if(!idleTime || !endTime || !URL) return res.status(400).json({"error :: addIdleTime route": "idleTime, endTime and URL are required"});
+        const collectionName = "usersIdleTime";
+        const resp = await addIdleTimeData(collectionName,uid,{
+            idleTime,
+            endTime,
+            URL,
+        });
+        return res.status(200).json({resp});
+    } catch (error) {
+        return res.status(500).json({"error :: addIdleTime route": error.message});
+    }
+});
 
 
 

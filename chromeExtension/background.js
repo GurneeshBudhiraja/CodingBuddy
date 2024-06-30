@@ -6,15 +6,16 @@ let startTimer; // timer to check the visited URL after 20 seconds
 
 // -------- Start :: Adding Message Listeners :: Start ------------
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    console.log("From content script message", request);
     if (request.type === "emailSignIn") {
         chrome.tabs.create({ url: "./login/login.html" });
     } else if(request.task==="irrelevantURL"){
       console.log("Background.js :: The URL is irrelevant. Exiting the tab",request);
       if(request.didExit) {
-        request["exitTime"] = new Date().toUTCString();
+        request["exitTime"] = new Date().toLocaleString();
         chrome.tabs.remove(tabID);
       } else{
-        request["stayTime"] = new Date().toUTCString();
+        request["stayTime"] = new Date().toLocaleString();
       }
       console.log("Background.js :: The URL is irrelevant",request);
       const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
@@ -39,10 +40,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
     } else if(request.task==="neutralURL"){
       if(request.didExit){
-        request["exitTime"] = new Date().toUTCString();
+        request["exitTime"] = new Date().toLocaleString();
         chrome.tabs.remove(tabID);
       } else{
-        request["stayTime"] = new Date().toUTCString();
+        request["stayTime"] = new Date().toLocaleString();
       }
       console.log("Background.js :: The URL is neutral",request);
       const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
@@ -64,7 +65,26 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       })
       const data = await resp.json();
       console.log(data);
-    }
+    } else if(request.task==="idleTimeData"){
+      const {uid} = await chrome.storage.sync.get(["uid"]);
+      if(!uid) chrome.tabs.create({ url: "./login/login.html" });
+      console.log("Background.js :: The idle time data is :: ",request.startIdleTime, request.endIdleTime, request.URL, uid)
+
+      const resp = await fetch(`http://localhost:3000/db/addIdleTime/${uid}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          idleTime:request.startIdleTime,
+          endTime:request.endIdleTime,
+          URL:request.URL,
+        }),
+      });
+      const data = await resp.json();
+      console.log(data);
+    } 
+    
     return true;
   });
   
@@ -174,28 +194,26 @@ async function appendVisitedURLs(tabID, tabURL) {
     relevanceReason = geminiJSObject.relevanceReason;
     goal = geminiJSObject.goal;
     console.log("relevance in background.js is",relevance, "\nThe relevance reason is :: ", relevanceReason); // 0 means neutral, 1 means relevant, -1 means irrelevant
-    if(relevance===1){
+    if(relevance===1 || relevance===0){
       const resp  = await fetch(`http://localhost:3000/db/addVisitedURL/${uid}`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
-          relevance:1,
+          relevance,
           relevanceReason,
           goal,
           tabURL:tabURL,
           youtubeTitle:youtubeVideoTitle || false,
           youtubeId:youtubeVideoId || false,
-          visitTime: new Date().toUTCString(), //only one will be available at a time
+          visitTime: new Date().toLocaleString(), //only one will be available at a time
         }),
       }); // adding the visited URL to the database
       const data = await resp.json();
       console.log(data);
     } else if(relevance===-1){
       chrome.tabs.sendMessage(tabID,{task:"irrelevantURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId, relevanceReason, goal}); 
-    } else{
-      chrome.tabs.sendMessage(tabID,{task:"neutralURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId, relevanceReason, goal});
     }
     console.log("Visited URLs are", visitedURLs);
     return;

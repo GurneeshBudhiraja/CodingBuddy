@@ -80,3 +80,19 @@ export const addVisitedURL=async(collectionName,uid,data)=>{
         return error.message;
     }
 }
+
+
+export const addIdleTimeData = async(collectionName,uid,data)=>{
+    try {
+        if(!uid) throw new Error("uid is required");
+        const userDocRef = doc(db, collectionName, uid);
+        const idleTimeCollection = collection(userDocRef, "idleTime");
+        const firestoreRespData = await addDoc(idleTimeCollection, {
+            createdAt: Timestamp.now(),
+            ...data
+        });
+        return firestoreRespData.id;
+    } catch (error) {
+        return error.message;
+    }
+};
