@@ -26,29 +26,17 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
     alert("Please select the code snippet to store in firestore!");
   } else if(request.task==="irrelevantURL"){
     try {
-      /* 
-      {
-        "task": "irrelevantURL",
-        "uid": "DBnQDnqjbDMq6PdDd8OslrCrEQF3",
-        "tabURL": "https://www.youtube.com/watch?v=H5aFWHIeUJo",
-        "isYoutubeURL": true,
-        "youtubeVideoTitle": "IND vs SA | ICC T20 World Cup 2024 Final - Virat Kohli Retires… - Tabish Hashmi - Haarna Mana Hay",
-        "youtubeVideoId": "H5aFWHIeUJo"
-        }
-        */
       if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();
       
-      const popupTime = new Date().toUTCString();
+      const visitTime = new Date().toUTCString();
       const resp = await createPopup("The URL is irrelevant. Do you want to exit?");
-      console.log("showPopupTime is :: ",popupTime);
+      console.log("showvisitTime is :: ",visitTime);
       console.log("resp is :: ",resp);
       if(resp){
-        chrome.runtime.sendMessage({didExit:true,popupTime,...request});
+        chrome.runtime.sendMessage({didExit:true,visitTime,...request});
       } else{
         if(request.isYoutubeURL) document.getElementsByTagName("video")[0].play();
-        const stayTime = new Date().toUTCString();
-        console.log("stayTime is :: ",stayTime);
-        chrome.runtime.sendMessage({didExit:false,popupTime,stayTime,...request});
+        chrome.runtime.sendMessage({didExit:false,visitTime,...request});
       }
     } catch (error) {
       console.log(error.message)
@@ -57,16 +45,14 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
   } else if(request.task==="neutralURL"){
     try {
       if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();
-      const popupTime = new Date().toUTCString();
+      const visitTime = new Date().toUTCString();
       const resp = await createPopup("The URL can be irrelevant. Do you want to exit?");
-      console.log("showPopupTime is :: ",popupTime);
+      console.log("showvisitTime is :: ",visitTime);
       if(resp){
-        chrome.runtime.sendMessage({didExit:true,popupTime,...request});
+        chrome.runtime.sendMessage({didExit:true,visitTime,...request});
       } else{
         if(request.isYoutubeURL) document.getElementsByTagName("video")[0].play();
-        const stayTime = new Date().toUTCString();
-        console.log("stayTime is :: ",stayTime);
-        chrome.runtime.sendMessage({didExit:false,popupTime,stayTime,...request});
+        chrome.runtime.sendMessage({didExit:false,visitTime,...request});
       }
     } catch (error) {
       console.log(error.message);

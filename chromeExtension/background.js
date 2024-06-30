@@ -13,7 +13,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       if(request.didExit) {
         request["exitTime"] = new Date().toUTCString();
         chrome.tabs.remove(tabID);
-      };
+      } else{
+        request["stayTime"] = new Date().toUTCString();
+      }
       console.log("Background.js :: The URL is irrelevant",request);
       const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
         method:"POST",
@@ -21,11 +23,15 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
+          relevance:-1,
+          relevanceReason:request.relevanceReason,
+          goal:request.goal,
           tabURL:request.tabURL,
-          youtubeTitle:request.youtubeVideoTitle,
-          youtubeId:request.youtubeVideoId,
-          popupTime:request.popupTime,
-          timeOfExitOrStay:request.didExit?request.exitTime:request.stayTime, //only one will be available at a time
+          youtubeTitle:request.youtubeVideoTitle || false,
+          youtubeId:request.youtubeVideoId || false,
+          visitTime:request.visitTime,
+          timeOfExit: request.didExit?request.exitTime:false, 
+          timeOfStay:!request.didExit?request.stayTime:false, //only one will be available at a time
         }),
       })
       const data = await resp.json();
@@ -35,7 +41,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       if(request.didExit){
         request["exitTime"] = new Date().toUTCString();
         chrome.tabs.remove(tabID);
-      };
+      } else{
+        request["stayTime"] = new Date().toUTCString();
+      }
       console.log("Background.js :: The URL is neutral",request);
       const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
         method:"POST",
@@ -43,11 +51,15 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
           "Content-Type":"application/json",
         },
         body:JSON.stringify({
+          relevance:0,
+          relevanceReason:request.relevanceReason,
+          goal:request.goal,
           tabURL:request.tabURL,
-          youtubeTitle:request.youtubeVideoTitle,
-          youtubeId:request.youtubeVideoId,
-          popupTime:request.popupTime,
-          timeOfExitOrStay:request.didExit?request.exitTime:request.stayTime, //only one will be available at a time
+          youtubeTitle:request.youtubeVideoTitle || false,
+          youtubeId:request.youtubeVideoId || false,
+          visitTime:request.visitTime,
+          timeOfExit: request.didExit?request.exitTime:false, 
+          timeOfStay:!request.didExit?request.stayTime:false,
         }),
       })
       const data = await resp.json();
@@ -117,7 +129,8 @@ async function appendVisitedURLs(tabID, tabURL) {
     let youtubeVideoId = null;
     let youtubeVideoTitle = null;
     let relevance = 0; // 0 means neutral, 1 means relevant, -1 means irrelevant
-
+    let relevanceReason = "";
+    let goal = "";
     if (tabURL && (tabURL.includes("chrome://") || !tabURL.trim().length))
       return; // checking if the URL is a chrome URL or empty
 
@@ -143,7 +156,6 @@ async function appendVisitedURLs(tabID, tabURL) {
       });
       youtubeVideoTitle = resp?.response;
     }
-    const dateTimeOfVisit = new Date().toLocaleString();
     const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
     const uid = localStorage.uid; //getting the uid from the local storage
     const geminiAPIResponse = await fetch("http://localhost:3000/gemini/checkGoalRelevance/",{
@@ -159,21 +171,31 @@ async function appendVisitedURLs(tabID, tabURL) {
     });
     const geminiJSObject = await geminiAPIResponse.json();
     relevance = geminiJSObject.relevance;
-    console.log(relevance);
+    relevanceReason = geminiJSObject.relevanceReason;
+    goal = geminiJSObject.goal;
+    console.log("relevance in background.js is",relevance, "\nThe relevance reason is :: ", relevanceReason); // 0 means neutral, 1 means relevant, -1 means irrelevant
     if(relevance===1){
-      visitedURLs.unshift({
-        tabID,
-        tabURL,
-        isYoutubeURL,
-        youtubeVideoTitle,
-        youtubeVideoId,
-        dateTimeOfVisit,
-        relevance:"relevant",
-      });
+      const resp  = await fetch(`http://localhost:3000/db/addVisitedURL/${uid}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          relevance:1,
+          relevanceReason,
+          goal,
+          tabURL:tabURL,
+          youtubeTitle:youtubeVideoTitle || false,
+          youtubeId:youtubeVideoId || false,
+          visitTime: new Date().toUTCString(), //only one will be available at a time
+        }),
+      }); // adding the visited URL to the database
+      const data = await resp.json();
+      console.log(data);
     } else if(relevance===-1){
-      chrome.tabs.sendMessage(tabID,{task:"irrelevantURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId}); 
+      chrome.tabs.sendMessage(tabID,{task:"irrelevantURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId, relevanceReason, goal}); 
     } else{
-      chrome.tabs.sendMessage(tabID,{task:"neutralURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId});
+      chrome.tabs.sendMessage(tabID,{task:"neutralURL",uid,tabURL,isYoutubeURL,youtubeVideoTitle,youtubeVideoId, relevanceReason, goal});
     }
     console.log("Visited URLs are", visitedURLs);
     return;

@@ -69,11 +69,10 @@ router.post("/addVisitedURL/:id",async(req,res)=>{
         const uid = req.params.id;
         // checking for uid
         if(!uid) return res.status(400).json({"error :: addVisitedURL route": "uid is required"});
-        if(Object.keys(req.body).length!==5) return res.status(400).json({"error :: addVisitedURL route": "Incomplete data sent. Try Again."});
-        const {tabURL,youtubeTitle,youtubeId,popupTime,timeOfExitOrStay} = req.body;
+        const data = req.body;
         console.log(req.body, "uid is",uid);
         const collectionName = "visitedURL";
-        const resp = await addVisitedURL(collectionName,{uid,tabURL,youtubeTitle,youtubeId,popupTime,timeOfExitOrStay});
+        const resp = await addVisitedURL(collectionName,uid,data);
         return res.status(200).json({resp});
 
     } catch (error) {

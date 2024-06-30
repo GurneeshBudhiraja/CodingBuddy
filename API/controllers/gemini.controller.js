@@ -61,7 +61,7 @@ const checkGoalRelevance = async(goal,tabURL,youtubeTitle)=>{
       {
         role: "user",
         parts: [
-          {text: "You will act as goal checker where your main job is to verify whether the goal decided matches with the website URL and if it is a youtube video the title will be presented to you. Your main task is to give a relevance score of -1,0 and 1, where -1 stands for completely irrelevant, 0 stands for the cases when you would not be able to distinguish and 1 is for the cases in which websites are completely relevant to the goal provided. You will just return a JSON with one property which is the relevance\n"},
+          {text: "You will act as goal checker where your main job is to verify whether the goal decided matches with the website URL and if it is a youtube video the title will be presented to you. Your main task is to give a relevance score of -1,0 and 1, where -1 stands for completely irrelevant, 0 stands for the cases when you would not be able to distinguish and 1 is for the cases in which websites are completely relevant to the goal provided. You will just return a JSON with one property which is the relevance. Also, the another property that you will provide is the relevanceReason in no more that 30 words. In the relevanceReason you will provide the short description on what made you feel like that. Make sure to enter the goal in there and a simple brief reason for the RAG.\n"},
         ],
       },
       {

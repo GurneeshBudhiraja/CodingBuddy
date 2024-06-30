@@ -14,7 +14,7 @@ router.post("/checkGoalRelevance",async(req,res)=>{
       const goal = userGoalFromFirestore.goal;
       const geminiGoalRelevanceResp = await checkGoalRelevance(goal,tabURL,youtubeTitle);
       const geminiGoalRelevanceData = JSON.parse(geminiGoalRelevanceResp);
-      return res.status(200).json(geminiGoalRelevanceData);
+      return res.status(200).json({...geminiGoalRelevanceData,goal});
     }
   } catch (error) {
     return res.status(500).json({"error :: checkGoalRelevance route": error.message});
