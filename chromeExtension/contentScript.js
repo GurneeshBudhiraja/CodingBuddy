@@ -57,38 +57,14 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
   mouseEvents.forEach((mouseEvent)=>{
     // triggering another timeout function after every mouse event
     document.addEventListener(mouseEvent,()=>{
-      clearTimeout(setTimeoutIdleTime); // clearing the timeout
-      setTimeoutIdleTime = setTimeout(async ()=>{
-        startIdleTime = new Date().toLocaleString();
-        console.log("reason :: mouseEvent");
-        const {resp,endIdleTime, URL} = await resetIdleTimeFunction();
-        if(!resp) return;
-        const idleTimeData = {
-          startIdleTime,
-          endIdleTime,
-          URL,
-        }
-        console.log(idleTimeData);
-        chrome.runtime.sendMessage({task:"idleTimeData" , ...idleTimeData});
-      },IDLE_TIME);
+      console.log("Mouse event is triggered");
     })
   });
+  // adding all the keyboard events to the webpage
   keyboardEvents.forEach((keyboardEvent)=>{
+    // triggering another timeout function after every keyboard event
     document.addEventListener(keyboardEvent,()=>{
-      clearTimeout(setTimeoutIdleTime); // clearing the timeout
-      setTimeoutIdleTime = setTimeout(async ()=>{
-        console.log("reason :: keyboardEvent");
-        startIdleTime = new Date().toLocaleString(); // for recording the start time of the idle time
-        const {resp, endIdleTime, URL} = await resetIdleTimeFunction();
-        if(!resp) return;
-        const idleTimeData = {
-          startIdleTime,
-          endIdleTime,
-          URL,
-        }
-        console.log(idleTimeData);
-        chrome.runtime.sendMessage({task:"idleTimeData", ...idleTimeData});
-      },IDLE_TIME);
+      console.log("Keyboard event is triggered");
     })
   });
 })();
