@@ -2,3 +2,4 @@ node_modules
 dist
 .env
 firebaseAdmin.json
+.DS_Store
