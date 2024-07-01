@@ -49,10 +49,10 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
 
 // IIFE for adding the event listener as soon as the content script is loaded
 
-const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
-const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
 
 ;(()=>{
+  const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
+  const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
   let IDLE_TIME = 300000; // anything above 5 minutes is considered as idle time
   let setTimeoutIdleTime;  
   let startIdleTime;
