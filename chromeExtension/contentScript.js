@@ -53,6 +53,7 @@ const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouse
 const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
 
 ;(()=>{
+  console.log("hello");
   let IDLE_TIME = 300000; // anything above 5 minutes is considered as idle time
   let setTimeoutIdleTime;  
   let startIdleTime;
