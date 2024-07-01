@@ -53,9 +53,6 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
 ;(()=>{
   const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
   const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
-  let IDLE_TIME = 300000; // anything above 5 minutes is considered as idle time
-  let setTimeoutIdleTime;  
-  let startIdleTime;
   // adding all the mouse events to the webpage
   mouseEvents.forEach((mouseEvent)=>{
     // triggering another timeout function after every mouse event
