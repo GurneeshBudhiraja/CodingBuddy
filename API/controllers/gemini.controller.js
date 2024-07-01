@@ -36,6 +36,7 @@ const checkCodeSnippet = async(codeSnippet)=>{
   });
 
   const result = await chatSession.sendMessage(codeSnippet);
+  console.log(result.response.text());
   return result.response.text();
 
   } catch (error) {
