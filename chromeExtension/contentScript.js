@@ -54,17 +54,24 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
   const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
   const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
   // adding all the mouse events to the webpage
+  let setTimeoutVariable;
   mouseEvents.forEach((mouseEvent)=>{
     // triggering another timeout function after every mouse event
     document.addEventListener(mouseEvent,()=>{
-      console.log("Mouse event is triggered");
+      clearTimeout(setTimeoutVariable);
+      setTimeoutVariable = setTimeout(async ()=>{
+        console.log("Mouse event is triggered");
+      },100);
     })
   });
   // adding all the keyboard events to the webpage
   keyboardEvents.forEach((keyboardEvent)=>{
     // triggering another timeout function after every keyboard event
     document.addEventListener(keyboardEvent,()=>{
-      console.log("Keyboard event is triggered");
+      clearTimeout(setTimeoutVariable);
+      setTimeoutVariable = setTimeout(async ()=>{
+        console.log("Keyboard event is triggered");
+      },100);
     })
   });
 })();
