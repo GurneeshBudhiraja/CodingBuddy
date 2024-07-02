@@ -12,26 +12,25 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       sendResponse({response:"Error in setTimeout function"});
     }
     return true;
-  } else if(request.task==="invalidCodeSnippet"){ // copying the code snippet to the clipboard
+  } else if(request.task==="invalidCodeSnippet"){ // alert for invalid code snippet :: ***** will change later *****
     try {
       alert("Please select the code snippet to store in firestore!");
       sendResponse({status:"alertShown"});
     } catch (error) {
-      console.log("Error while showing the alert box!");
+      console.log("Error while showing the invalid code snippet alert box! :: contentScript.js ::",error.message);
     }
     return true;
-  } else if(request.task==="codeSnippetStored"){
+  } else if(request.task==="codeSnippetStored"){ // alert for code snippet stored successfully :: ***** will change later *****
     alert("Code snippet copied successfully!");
   } else if(request.task==="invalidCodeSnippet"){
     alert("Please select the code snippet to store in firestore!");
-  } else if(request.task==="irrelevantURL"){
+  } else if(request.task==="irrelevantURL"){ // alert for irrelevant URL :: ***** will change the styling of createPopup later *****
     try {
       if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();
-      
       const visitTime = new Date().toLocaleString();
       const resp = await createPopup("The URL is irrelevant. Do you want to exit?");
-      console.log("showvisitTime is :: ",visitTime);
-      console.log("resp is :: ",resp);
+      console.log("showvisitTime is :: ",visitTime); // will remove later
+      console.log("resp is :: ",resp); // will remove later
       if(resp){
         chrome.runtime.sendMessage({didExit:true,visitTime,...request});
       } else{
@@ -42,71 +41,60 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       console.log(error.message)
     }
     return true;
+  } else if(request.task==="idleTimePopup"){
+    try {
+      const resp = await idlePopup("You have been idle for a while. Do you want to exit?");
+      if(!resp) return;
+      const {idleStartTime,uid} = request;
+      const idleEndTime = new Date().toLocaleString();
+      const url = window.location.href;
+      chrome.runtime.sendMessage({task:"idleTimeDataStore",didExit:true,url,uid,idleEndTime,idleStartTime});
+    } catch (error) {
+      console.log("Error in idleTimePopup :: contentScript.js :: ",error.message);
+      return;
+    }
   }
 })
 
-// ------ Start :: Handling Idle Time :: Start -------
 
+
+// ------ Start :: Handling Idle Time :: Start -------
 // IIFE for adding the event listener as soon as the content script is loaded
 
-const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
-const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
+;(() => {
+  const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mousemove', 'mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'contextmenu']; // mouse events
+  const keyboardEvents = ['keydown', 'keyup']; // keyboard events 
 
-;(()=>{
-  let IDLE_TIME = 300000; // anything above 5 minutes is considered as idle time
-  let setTimeoutIdleTime;  
-  let startIdleTime;
-  // adding all the mouse events to the webpage
-  mouseEvents.forEach((mouseEvent)=>{
-    // triggering another timeout function after every mouse event
-    document.addEventListener(mouseEvent,()=>{
-      clearTimeout(setTimeoutIdleTime); // clearing the timeout
-      setTimeoutIdleTime = setTimeout(async ()=>{
-        startIdleTime = new Date().toLocaleString();
-        console.log("reason :: mouseEvent");
-        const {resp,endIdleTime, URL} = await resetIdleTimeFunction();
-        if(!resp) return;
-        const idleTimeData = {
-          startIdleTime,
-          endIdleTime,
-          URL,
-        }
-        console.log(idleTimeData);
-        chrome.runtime.sendMessage({task:"idleTimeData" , ...idleTimeData});
-      },IDLE_TIME);
-    })
+  let setTimeoutVariable;
+  
+  mouseEvents.forEach((mouseEvent) => {
+    document.addEventListener(mouseEvent, resetTimeout);
   });
-  keyboardEvents.forEach((keyboardEvent)=>{
-    document.addEventListener(keyboardEvent,()=>{
-      clearTimeout(setTimeoutIdleTime); // clearing the timeout
-      setTimeoutIdleTime = setTimeout(async ()=>{
-        console.log("reason :: keyboardEvent");
-        idleStartTime = new Date().toLocaleString(); // for recording the start time of the idle time
-        const {resp, idleEndTime, URL} = await resetIdleTimeFunction();
-        if(!resp) return;
-        const idleTimeData = {
-          idleStartTime,
-          endIdleTime,
-          URL,
-        }
-        console.log(idleTimeData);
-        chrome.runtime.sendMessage({task:"idleTimeData", ...idleTimeData});
-      },IDLE_TIME);
-    })
+  
+  keyboardEvents.forEach((keyboardEvent) => {
+    document.addEventListener(keyboardEvent, resetTimeout);
   });
+  
+  function resetTimeout() {
+    clearTimeout(setTimeoutVariable);
+    setTimeoutVariable = setTimeout(() => {
+      backgroundIdleMessage("No activity detected");
+    }, 1000);
+  }
+  
+  function backgroundIdleMessage(msg) {
+    console.log(msg);
+    chrome.runtime.sendMessage({ task: "idleTimeStart" });
+  }
+
 })();
-
-async function resetIdleTimeFunction(){
-  const idlePopupResolve  = await idlePopup("You have been idle for 2 minutes. Do you want to exit?"); 
-  const endIdleTime = new Date().toLocaleString();
-  const URL = window.location.href;
-  return {resp:idlePopupResolve,endIdleTime, URL};
-}
 
 // ------- End :: Handling Idle Time :: End -------
 
 
 // -------- Start :: utils function for the content script :: Start --------
+
+// popup for irrelevant URL
 function createPopup(msg) {
   return new Promise((resolve) => {
     // Create a container div for the popup
@@ -149,8 +137,7 @@ function createPopup(msg) {
   });
 }
 
-
-
+// popup for idle time  
 function idlePopup(msg) {
   return new Promise((resolve) => {
 
@@ -173,8 +160,8 @@ function idlePopup(msg) {
     
     // Create a timer paragraph
     const timer = document.createElement('p');
-    let idleSeconds = 0;
-    let idleMinutes = 2;  // Start from 2 minutes
+    let idleSeconds = 0; 
+    let idleMinutes = 5; // anything above 5 minutes 
     let idleHours = 0;
     timer.innerText = `Idle time: ${idleHours} hours, ${idleMinutes} minutes, ${idleSeconds} seconds`;
     popup.appendChild(timer);
@@ -208,6 +195,4 @@ function idlePopup(msg) {
     
   });
 }
-  
-  
 // -------- End :: utils function for the content script :: End --------

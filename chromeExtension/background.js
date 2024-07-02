@@ -2,6 +2,7 @@ let tabID = undefined; // current tabId
 let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
+let startIdleTimeTimeoutFunction; // variable for the idle time timeout function
 
 
 // -------- Start :: Adding Message Listeners :: Start ------------
@@ -18,7 +19,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         request["stayTime"] = new Date().toLocaleString();
       }
       console.log("Background.js :: The URL is irrelevant",request);
-      const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
+      const resp = await fetch(`http://localhost:3000/db/addvisitedurl/${request.uid}`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
@@ -38,53 +39,42 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       const data = await resp.json();
       console.log(data);
 
-    } else if(request.task==="neutralURL"){
-      if(request.didExit){
-        request["exitTime"] = new Date().toLocaleString();
-        chrome.tabs.remove(tabID);
-      } else{
-        request["stayTime"] = new Date().toLocaleString();
+    } else if(request.task==="idleTimeStart"){
+      try {
+        clearTimeout(startIdleTimeTimeoutFunction);
+        const idleStartTime = new Date().toLocaleString();
+        const {uid} = await chrome.storage.sync.get(["uid"]);
+        if(!uid) chrome.tabs.create({ url: "./login/login.html" });
+        startIdleTimeTimeoutFunction = setTimeout(() => {
+          chrome.tabs.sendMessage(sender.tab.id, { task: "idleTimePopup" , idleStartTime, uid });
+        }, 5*60*1000);   // 5 minutes
+      } catch (error) {
+        console.log(error.message);
+        return;
       }
-      console.log("Background.js :: The URL is neutral",request);
-      const resp = await fetch(`http://localhost:3000/db/addVisitedURL/${request.uid}`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-        },
-        body:JSON.stringify({
-          relevance:0,
-          relevanceReason:request.relevanceReason,
-          goal:request.goal,
-          tabURL:request.tabURL,
-          youtubeTitle:request.youtubeVideoTitle || false,
-          youtubeId:request.youtubeVideoId || false,
-          visitTime:request.visitTime,
-          timeOfExit: request.didExit?request.exitTime:false, 
-          timeOfStay:!request.didExit?request.stayTime:false,
-        }),
-      })
-      const data = await resp.json();
-      console.log(data);
-    } else if(request.task==="idleTimeData"){
-      const {uid} = await chrome.storage.sync.get(["uid"]);
-      if(!uid) chrome.tabs.create({ url: "./login/login.html" });
-      console.log("Background.js :: The idle time data is :: ",request.startIdleTime, request.endIdleTime, request.URL, uid)
-
-      const resp = await fetch(`http://localhost:3000/db/addIdleTime/${uid}`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-        },
-        body:JSON.stringify({
-          idleTime:request.startIdleTime,
-          endTime:request.endIdleTime,
-          URL:request.URL,
-        }),
-      });
-      const data = await resp.json();
-      console.log(data);
-    } 
-    
+    } else if(request.task==="idleTimeDataStore"){
+      try {
+        console.log("request in idleTimeDataStore :: background.js",request); // will remove later
+        if(!request.didExit) throw new Error("Background.js :: The user is idle for a while but didExit is false");
+        const {uid, idleStartTime, idleEndTime, url} = request;
+        console.log(idleStartTime, idleEndTime, url); // will remove later  
+        const resp = await fetch(`http://localhost:3000/db/addidletime/${uid}`,{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+          },
+          body:JSON.stringify({
+            idleStartTime,  
+            idleEndTime,
+            url,
+          })
+        });
+        return;
+      } catch (error) {
+        console.log("Error in idleTimeDataStore :: background.js :: ",error.message);
+        return; 
+      }
+    }
     return true;
   });
   
@@ -139,10 +129,10 @@ function logTabURL(tabId) {
   }, 1000);
   return;
 }
-
 // ------ End :: Logic for sending the tab URL :: End ------------
 
-// ----- Start :: Logic for appending the URL to the visitedURLs :: Start -------
+
+// ----- Start :: Logic for storing the visited URLs :: Start -------
 async function appendVisitedURLs(tabID, tabURL) {
   try {
     let isYoutubeURL = false;
@@ -193,9 +183,8 @@ async function appendVisitedURLs(tabID, tabURL) {
     relevance = geminiJSObject.relevance;
     relevanceReason = geminiJSObject.relevanceReason;
     goal = geminiJSObject.goal;
-    console.log("relevance in background.js is",relevance, "\nThe relevance reason is :: ", relevanceReason); // 0 means neutral, 1 means relevant, -1 means irrelevant
     if(relevance===1 || relevance===0){
-      const resp  = await fetch(`http://localhost:3000/db/addVisitedURL/${uid}`,{
+      const resp  = await fetch(`http://localhost:3000/db/addidletime/${uid}`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
@@ -223,7 +212,7 @@ async function appendVisitedURLs(tabID, tabURL) {
   }
 }
 
-// ---- End :: Logic for appending the URL to the visitedURLs :: End -------
+// ---- End :: Logic for storing the visited URLs :: End -------
 
 // ------ Start :: Logic for context menus :: Start -------
 chrome.runtime.onInstalled.addListener(() => {
@@ -274,3 +263,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 // ------ End :: Logic for context menus :: End -------
+
+//  ------- Start :: Logic for the idle time on the browser :: Start -------
+
+
+
+
+
+//  ------- End :: Logic for the idle time on the browser :: End -------

@@ -64,7 +64,7 @@ router.post("/addsnippet",async (req,res)=>{
     }
 });
 
-router.post("/addVisitedURL/:id",async(req,res)=>{
+router.post("/addvisitedurl/:id",async(req,res)=>{
     try {
         const uid = req.params.id;
         // checking for uid
@@ -83,7 +83,6 @@ router.post("/addVisitedURL/:id",async(req,res)=>{
 router.post("/addidletime/:id",async(req,res)=>{
     try {
         const uid = req.params.id;
-        console.log(req.params);
         if(!uid) return res.status(400).json({"error :: addIdleTime route": "uid is required"});
         const {idleStartTime,idleEndTime,url} = req.body;
         if([idleStartTime, idleEndTime, url].some((item)=>!item)) return res.status(400).json({"error :: addIdleTime route": "idleStartTime, idleEndTime and url are required"});
