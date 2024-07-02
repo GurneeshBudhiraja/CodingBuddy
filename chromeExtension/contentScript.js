@@ -42,6 +42,14 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       console.log(error.message)
     }
     return true;
+  } else if(request.task === "idleTimePopup") {
+    const {idleStartTime, uid} = request;
+    const idlePopupResp = await idlePopup("You have been idle for a while. Do you want to exit?");
+    if(idlePopupResp){
+      const idleEndTime = new Date().toLocaleString();
+      const url = window.location.href;
+      chrome.runtime.sendMessage({task:"addIdleTimeData" ,idleStartTime,idleEndTime,uid, url, didEnd:true});
+    }
   }
 })
 
@@ -49,39 +57,33 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
 
 // IIFE for adding the event listener as soon as the content script is loaded
 
-
-;(()=>{
-  const mouseEvents = ['click','dblclick','mousedown','mouseup','mousemove','mouseenter','mouseleave','mouseover','mouseout','contextmenu',]; // list of mouse events
-  const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
-  // adding all the mouse events to the webpage
+;(() => {
+  const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mousemove', 'mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'contextmenu'];
+  
+  const keyboardEvents = ['keydown', 'keyup'];
+  
   let setTimeoutVariable;
-  mouseEvents.forEach((mouseEvent)=>{
-    // triggering another timeout function after every mouse event
-    document.addEventListener(mouseEvent,()=>{
-      clearTimeout(setTimeoutVariable);
-      setTimeoutVariable = setTimeout(async ()=>{
-        console.log("Mouse event is triggered");
-      },100);
-    })
+  
+  mouseEvents.forEach((mouseEvent) => {
+    document.addEventListener(mouseEvent, resetTimeout);
   });
-  // adding all the keyboard events to the webpage
-  keyboardEvents.forEach((keyboardEvent)=>{
-    // triggering another timeout function after every keyboard event
-    document.addEventListener(keyboardEvent,()=>{
-      clearTimeout(setTimeoutVariable);
-      setTimeoutVariable = setTimeout(async ()=>{
-        console.log("Keyboard event is triggered");
-      },100);
-    })
+  
+  keyboardEvents.forEach((keyboardEvent) => {
+    document.addEventListener(keyboardEvent, resetTimeout);
   });
-})();
 
-async function resetIdleTimeFunction(){
-  const idlePopupResolve  = await idlePopup("You have been idle for 2 minutes. Do you want to exit?");
-  const endIdleTime = new Date().toLocaleString();
-  const URL = window.location.href;
-  return {resp:idlePopupResolve,endIdleTime, URL};
-}
+  function resetTimeout() {
+    clearTimeout(setTimeoutVariable);
+    setTimeoutVariable = setTimeout(() => {
+      sendIdleMessageToBackground("No activity detected");
+    }, 100);
+  }
+
+  function sendIdleMessageToBackground(msg) {
+    console.log(msg);
+    chrome.runtime.sendMessage({ task: "idleTime" });
+  }
+})();
 
 // ------- End :: Handling Idle Time :: End -------
 
@@ -153,8 +155,8 @@ function idlePopup(msg) {
     
     // Create a timer paragraph
     const timer = document.createElement('p');
-    let idleSeconds = 0;
-    let idleMinutes = 2;  // Start from 2 minutes
+    let idleSeconds = 10; //start from 10 seconds
+    let idleMinutes = 0;  
     let idleHours = 0;
     timer.innerText = `Idle time: ${idleHours} hours, ${idleMinutes} minutes, ${idleSeconds} seconds`;
     popup.appendChild(timer);

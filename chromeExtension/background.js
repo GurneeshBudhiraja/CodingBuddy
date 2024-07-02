@@ -2,7 +2,7 @@ let tabID = undefined; // current tabId
 let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
-
+let startIdleTimeTimeoutFunction; // timer to check the idle time after 2 minutes
 
 // -------- Start :: Adding Message Listeners :: Start ------------
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
@@ -83,8 +83,44 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       });
       const data = await resp.json();
       console.log(data);
-    } 
-    
+    } else if(request.task==="idleTime"){
+      try {
+        clearTimeout(startIdleTimeTimeoutFunction);
+        const idleStartTime = new Date().toLocaleString();
+        startIdleTimeTimeoutFunction = setTimeout(() => {
+          // getting the uid from the local storage
+          const {uid} = chrome.storage.sync.get(["uid"]);
+          if(!uid) chrome.tabs.create({ url: "./login/login.html" }); // will redirect the user to the login page if the uid is not found
+          chrome.tabs.sendMessage(sender.tab.id, { task: "idleTimePopup", uid, idleStartTime});
+        }, 10000); // 10 seconds for testing purposes
+      } catch (error) {
+        console.log(error.message);
+      }
+    } else if(request.task==="addIdleTimeData"){
+      try {
+        const {uid, idleStartTime, idleEndTime,url, didEnd} = request;
+        if([uid, idleEndTime, idleStartTime, url, didEnd].some((item)=>!item)){
+          console.log("Some data is missing :: background.js :: addIdleTimeData task");
+          return;
+        };
+        const resp = await fetch(`http://localhost:3000/db/addIdleTime/${uid}`,{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+          },
+          body:JSON.stringify({
+            idleTime:idleStartTime,
+            endTime:idleEndTime,
+            URL:url,
+          }),
+        });
+        const data = await resp.json();
+        console.log(data);
+      } catch (error) {
+        console.log(error.message);
+        return;
+      }
+    }
     return true;
   });
   
