@@ -81,11 +81,11 @@ const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
       clearTimeout(setTimeoutIdleTime); // clearing the timeout
       setTimeoutIdleTime = setTimeout(async ()=>{
         console.log("reason :: keyboardEvent");
-        startIdleTime = new Date().toLocaleString(); // for recording the start time of the idle time
-        const {resp, endIdleTime, URL} = await resetIdleTimeFunction();
+        idleStartTime = new Date().toLocaleString(); // for recording the start time of the idle time
+        const {resp, idleEndTime, URL} = await resetIdleTimeFunction();
         if(!resp) return;
         const idleTimeData = {
-          startIdleTime,
+          idleStartTime,
           endIdleTime,
           URL,
         }
@@ -97,7 +97,7 @@ const keyboardEvents = ['keydown','keyup',]; // list of keyboard events
 })();
 
 async function resetIdleTimeFunction(){
-  const idlePopupResolve  = await idlePopup("You have been idle for 2 minutes. Do you want to exit?");
+  const idlePopupResolve  = await idlePopup("You have been idle for 2 minutes. Do you want to exit?"); 
   const endIdleTime = new Date().toLocaleString();
   const URL = window.location.href;
   return {resp:idlePopupResolve,endIdleTime, URL};

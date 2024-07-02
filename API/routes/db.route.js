@@ -80,17 +80,18 @@ router.post("/addVisitedURL/:id",async(req,res)=>{
     }
 })
 
-router.post("/addIdleTime/:id",async(req,res)=>{
+router.post("/addidletime/:id",async(req,res)=>{
     try {
         const uid = req.params.id;
+        console.log(req.params);
         if(!uid) return res.status(400).json({"error :: addIdleTime route": "uid is required"});
-        const {idleTime,endTime,URL} = req.body;
-        if(!idleTime || !endTime || !URL) return res.status(400).json({"error :: addIdleTime route": "idleTime, endTime and URL are required"});
+        const {idleStartTime,idleEndTime,url} = req.body;
+        if([idleStartTime, idleEndTime, url].some((item)=>!item)) return res.status(400).json({"error :: addIdleTime route": "idleStartTime, idleEndTime and url are required"});
         const collectionName = "usersIdleTime";
         const resp = await addIdleTimeData(collectionName,uid,{
-            idleTime,
-            endTime,
-            URL,
+            idleStartTime,
+            idleEndTime,
+            url,
         });
         return res.status(200).json({resp});
     } catch (error) {
