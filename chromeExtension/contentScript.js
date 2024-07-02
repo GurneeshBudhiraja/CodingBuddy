@@ -15,15 +15,12 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
   } else if(request.task==="invalidCodeSnippet"){ // alert for invalid code snippet :: ***** will change later *****
     try {
       alert("Please select the code snippet to store in firestore!");
-      sendResponse({status:"alertShown"});
     } catch (error) {
       console.log("Error while showing the invalid code snippet alert box! :: contentScript.js ::",error.message);
     }
     return true;
   } else if(request.task==="codeSnippetStored"){ // alert for code snippet stored successfully :: ***** will change later *****
     alert("Code snippet copied successfully!");
-  } else if(request.task==="invalidCodeSnippet"){
-    alert("Please select the code snippet to store in firestore!");
   } else if(request.task==="irrelevantURL"){ // alert for irrelevant URL :: ***** will change the styling of createPopup later *****
     try {
       if(request.isYoutubeURL) document.getElementsByTagName("video")[0].pause();

@@ -73,7 +73,6 @@ export const addVisitedURL=async(collectionName,uid,data)=>{
             createdAt: Timestamp.now(),
             ...data
         });
-        console.log("firestoreRespData",firestoreRespData.id);
         return firestoreRespData.id;
 
     } catch (error) {

@@ -211,9 +211,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       };
       const {uid} = await chrome.storage.sync.get(["uid"]);
       if(!uid){
-        alert("No uid is found. Please sign in first.");
         chrome.tabs.create({ url: "./login/login.html" });
-        return;
       } 
       const response = await fetch("http://localhost:3000/db/addsnippet/", {
         method: "POST",
@@ -226,7 +224,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }),
       });
       const data = await response.json();
-      if(data["codeSnippet"]===false){
+      console.log(data);
+      if(data["isCodePresent"]===false){
         chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
         return;
       }

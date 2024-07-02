@@ -52,9 +52,8 @@ router.post("/addsnippet",async (req,res)=>{
             return res.status(400).json({"error :: addsnippet route": "uid and codeSnippet are required"});
         } else{
             const resp = await addCodeSnippetToFirestore(uid,codeSnippet);
-
             if(!resp) {
-                return res.status(400).json({codeSnippet:false});
+                return res.status(400).json({isCodePresent: false});
             };
 
             return res.status(200).json({resp: resp["id"]});
@@ -70,7 +69,6 @@ router.post("/addvisitedurl/:id",async(req,res)=>{
         // checking for uid
         if(!uid) return res.status(400).json({"error :: addVisitedURL route": "uid is required"});
         const data = req.body;
-        console.log(req.body, "uid is",uid);
         const collectionName = "visitedURL";
         const resp = await addVisitedURL(collectionName,uid,data);
         return res.status(200).json({resp});
