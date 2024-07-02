@@ -2,7 +2,7 @@ let tabID = undefined; // current tabId
 let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
-let startIdleTimeTimeoutFunction; // variable for the idle time timeout function
+
 
 
 // -------- Start :: Adding Message Listeners :: Start ------------
@@ -39,42 +39,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       const data = await resp.json();
       console.log(data);
 
-    } else if(request.task==="idleTimeStart"){
-      try {
-        clearTimeout(startIdleTimeTimeoutFunction);
-        const idleStartTime = new Date().toLocaleString();
-        const {uid} = await chrome.storage.sync.get(["uid"]);
-        if(!uid) chrome.tabs.create({ url: "./login/login.html" });
-        startIdleTimeTimeoutFunction = setTimeout(() => {
-          chrome.tabs.sendMessage(sender.tab.id, { task: "idleTimePopup" , idleStartTime, uid });
-        }, 5*60*1000);   // 5 minutes
-      } catch (error) {
-        console.log(error.message);
-        return;
-      }
-    } else if(request.task==="idleTimeDataStore"){
-      try {
-        console.log("request in idleTimeDataStore :: background.js",request); // will remove later
-        if(!request.didExit) throw new Error("Background.js :: The user is idle for a while but didExit is false");
-        const {uid, idleStartTime, idleEndTime, url} = request;
-        console.log(idleStartTime, idleEndTime, url); // will remove later  
-        const resp = await fetch(`http://localhost:3000/db/addidletime/${uid}`,{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json",
-          },
-          body:JSON.stringify({
-            idleStartTime,  
-            idleEndTime,
-            url,
-          })
-        });
-        return;
-      } catch (error) {
-        console.log("Error in idleTimeDataStore :: background.js :: ",error.message);
-        return; 
-      }
-    }
+    } 
     return true;
   });
   
@@ -107,27 +72,36 @@ const tabIdSet = new Set();
 
 // function to retrieve the tab URL using tabID
 function logTabURL(tabId) {
-  let deletingSetElementTimeout;
-  clearTimeout(deletingSetElementTimeout); // clearing the timeout
-
-  if (tabIdSet.has(tabId)) return; // checking if the tabId is already present in the set
-  tabIdSet.add(tabId);
-  console.log("Tabidset after adding is", tabIdSet);
-  chrome.tabs.get(tabId, function (tab) {
-    // checking if the url exists
-    if (tab?.url) {
-      tabURL = tab.url;
-      tabID = tab.id;
-    }
-  });
-  setTimeout(() => appendVisitedURLs(tabID, tabURL), 1000);
-
-  // setting a timeout to delete the tabId from the set after 1 second
-  deletingSetElementTimeout = setTimeout(() => {
-    tabIdSet.delete(tabId);
-    console.log("Tabidset after deletion is", tabIdSet);
-  }, 1000);
-  return;
+  try {
+    let deletingSetElementTimeout;
+    clearTimeout(deletingSetElementTimeout); // clearing the timeout
+  
+    if (tabIdSet.has(tabId)){
+      console.log("Tabidset already has the tabId", tabId);
+      return;
+    }; // checking if the tabId is already present in the set
+    tabIdSet.add(tabId);
+    console.log("Tabidset after adding is", tabIdSet);
+    chrome.tabs.get(tabId, function (tab) {
+      // checking if the url exists
+      if (tab?.url) {
+        tabURL = tab.url;
+        tabID = tab.id;
+      }
+      console.log("Tab url is:",tabURL,"tab id is:",tabID);
+    });
+    setTimeout(() => appendVisitedURLs(tabID, tabURL), 1000);
+  
+    // setting a timeout to delete the tabId from the set after 1 second
+    deletingSetElementTimeout = setTimeout(() => {
+      tabIdSet.delete(tabId);
+      console.log("Tabidset after deletion is", tabIdSet);
+    }, 1000);
+    return;
+  } catch (error) {
+    console.log("Error in logTabURL function:", error.message);
+    return;
+  }
 }
 // ------ End :: Logic for sending the tab URL :: End ------------
 
@@ -143,7 +117,6 @@ async function appendVisitedURLs(tabID, tabURL) {
     let goal = "";
     if (tabURL && (tabURL.includes("chrome://") || !tabURL.trim().length))
       return; // checking if the URL is a chrome URL or empty
-
     if (tabURL.includes("https://www.youtube.com/watch?v=")) {
       isYoutubeURL = true;
       youtubeVideoId = tabURL.split("https://www.youtube.com/watch?v=")[1];
@@ -164,10 +137,12 @@ async function appendVisitedURLs(tabID, tabURL) {
           }
         );
       });
+      console.log("Resp for youtube title is:",resp);
       youtubeVideoTitle = resp?.response;
     }
     const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
     const uid = localStorage.uid; //getting the uid from the local storage
+    console.log("sending the response to gemini api");
     const geminiAPIResponse = await fetch("http://localhost:3000/gemini/checkGoalRelevance/",{
       method:"POST",
       headers:{
@@ -184,7 +159,7 @@ async function appendVisitedURLs(tabID, tabURL) {
     relevanceReason = geminiJSObject.relevanceReason;
     goal = geminiJSObject.goal;
     if(relevance===1 || relevance===0){
-      const resp  = await fetch(`http://localhost:3000/db/addidletime/${uid}`,{
+      const resp  = await fetch(`http://localhost:3000/db/addvisitedurl/${uid}`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
@@ -207,7 +182,7 @@ async function appendVisitedURLs(tabID, tabURL) {
     console.log("Visited URLs are", visitedURLs);
     return;
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
     return;
   }
 }

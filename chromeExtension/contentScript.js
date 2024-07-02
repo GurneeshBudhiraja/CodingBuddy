@@ -41,55 +41,10 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       console.log(error.message)
     }
     return true;
-  } else if(request.task==="idleTimePopup"){
-    try {
-      const resp = await idlePopup("You have been idle for a while. Do you want to exit?");
-      if(!resp) return;
-      const {idleStartTime,uid} = request;
-      const idleEndTime = new Date().toLocaleString();
-      const url = window.location.href;
-      chrome.runtime.sendMessage({task:"idleTimeDataStore",didExit:true,url,uid,idleEndTime,idleStartTime});
-    } catch (error) {
-      console.log("Error in idleTimePopup :: contentScript.js :: ",error.message);
-      return;
-    }
-  }
+  } 
 })
 
 
-
-// ------ Start :: Handling Idle Time :: Start -------
-// IIFE for adding the event listener as soon as the content script is loaded
-
-;(() => {
-  const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mousemove', 'mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'contextmenu']; // mouse events
-  const keyboardEvents = ['keydown', 'keyup']; // keyboard events 
-
-  let setTimeoutVariable;
-  
-  mouseEvents.forEach((mouseEvent) => {
-    document.addEventListener(mouseEvent, resetTimeout);
-  });
-  
-  keyboardEvents.forEach((keyboardEvent) => {
-    document.addEventListener(keyboardEvent, resetTimeout);
-  });
-  
-  function resetTimeout() {
-    clearTimeout(setTimeoutVariable);
-    setTimeoutVariable = setTimeout(() => {
-      backgroundIdleMessage("No activity detected");
-    }, 1000);
-  }
-  
-  function backgroundIdleMessage(msg) {
-    console.log(msg);
-    chrome.runtime.sendMessage({ task: "idleTimeStart" });
-  }
-
-})();
-
-// ------- End :: Handling Idle Time :: End -------
 
 
 // -------- Start :: utils function for the content script :: Start --------
@@ -136,63 +91,3 @@ function createPopup(msg) {
     document.body.appendChild(popup);
   });
 }
-
-// popup for idle time  
-function idlePopup(msg) {
-  return new Promise((resolve) => {
-
-    // Create a container div for the popup
-    const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.left = '50%';
-    popup.style.top = '50%';
-    popup.style.transform = 'translate(-50%, -50%)';
-    popup.style.border = '1px solid #000';
-    popup.style.backgroundColor = '#fff';
-    popup.style.padding = '20px';
-    popup.style.zIndex = '1000';
-    popup.style.textAlign = 'center';
-    
-    // Create a message paragraph
-    const message = document.createElement('p');
-    message.innerText = msg;
-    popup.appendChild(message);
-    
-    // Create a timer paragraph
-    const timer = document.createElement('p');
-    let idleSeconds = 0; 
-    let idleMinutes = 5; // anything above 5 minutes 
-    let idleHours = 0;
-    timer.innerText = `Idle time: ${idleHours} hours, ${idleMinutes} minutes, ${idleSeconds} seconds`;
-    popup.appendChild(timer);
-    
-    // Create the Exit button
-    const exitButton = document.createElement('button');
-    exitButton.innerText = 'Exit';
-    exitButton.onclick = function() {
-      document.body.removeChild(popup);
-      clearInterval(timerInterval);
-      resolve(true);
-    };
-    popup.appendChild(exitButton);
-    
-    // Add the popup to the body
-    document.body.appendChild(popup);
-    
-    // Update the timer every second
-    const timerInterval = setInterval(() => {
-      idleSeconds++;
-      if (idleSeconds >= 60) {
-        idleSeconds = 0;
-        idleMinutes++;
-      }
-      if (idleMinutes >= 60) {
-        idleMinutes = 0;
-        idleHours++;
-      }
-      timer.innerText = `Idle time: ${idleHours} hours, ${idleMinutes} minutes, ${idleSeconds} seconds`;
-    }, 1000);
-    
-  });
-}
-// -------- End :: utils function for the content script :: End --------
