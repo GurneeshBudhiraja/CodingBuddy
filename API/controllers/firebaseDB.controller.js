@@ -45,7 +45,7 @@ export const addCodeSnippetToFirestore = async(uid,codeSnippet)=>{
         if(!uid || !codeSnippet) throw new Error("uid and codeSnippet are required");
         const geminiCheckCodeSnippetResponse = await checkCodeSnippet(codeSnippet);
         const geminiJSObject = JSON.parse(geminiCheckCodeSnippetResponse);
-        console.log("geminiJSObject",geminiJSObject);
+        console.log("geminiJSObject",geminiJSObject); // will remove later
 
         if(geminiJSObject["isCodePresent"]===false) return false;
         else if(geminiJSObject["isCodePresent"]===true){

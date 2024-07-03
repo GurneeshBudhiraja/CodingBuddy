@@ -6,7 +6,6 @@ async function createAccount(email,password){
         const user  = await createUserWithEmailAndPassword(auth, email, password);
         return user;
     } catch (error) {
-        console.log(error);
         return error;
     }
 }
@@ -17,7 +16,6 @@ async function authenticateAccount(email,password){
         const user = await signInWithEmailAndPassword(auth,email,password);
         return user;
     } catch (error) {
-        console.log(error);
         return error;
     }
 }
@@ -32,7 +30,6 @@ async function getCurrentUser(){
             return {user:null};
         }
     } catch (error) {
-        console.log(error);
         return error;
     }
 }

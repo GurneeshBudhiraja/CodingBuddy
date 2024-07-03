@@ -2,8 +2,7 @@ document.querySelector("button").addEventListener("click",async()=>{
     try {
         const email = document.querySelector("#email").value;
         const password = document.querySelector("#password").value;
-        if(!email || !password) throw new Error("Please enter email and password");
-        console.log(email,password);
+        console.log(email,password); // will remove later
         const response = await fetch("http://localhost:3000/auth/login/",{
             method:"POST",
             headers:{
@@ -23,9 +22,12 @@ document.querySelector("button").addEventListener("click",async()=>{
                 chrome.tabs.remove(tab.id, function() { });
             });            
         } else {
-            alert("User not created successfully!");
+            alert("User login failed. Please try again later.");
+            chrome.tabs.getCurrent(function(tab) {
+                chrome.tabs.remove(tab.id, function() {});
+            });
         }
     } catch (error) {
-        console.log(error);
+        console.log(error.message);
     }
 });

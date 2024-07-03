@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// will extract the code or convert the text to code
 const checkCodeSnippet = async(codeSnippet)=>{ 
   if(!codeSnippet) throw new Error("Code snippet is required");
   try {
@@ -17,13 +18,11 @@ const checkCodeSnippet = async(codeSnippet)=>{
   };
   const chatSession = model.startChat({
     generationConfig,
- // safetySettings: Adjust safety settings
- // See https://ai.google.dev/gemini-api/docs/safety-settings
     history: [
       {
         role: "user",
         parts: [
-          {text: "You will act as codeChecker. your main job is to analyse the input text. If the input text contains code of any type, you will segregate the code from it and return the following: isCodePresent, code and shortName where shortName will be a short name given to the code snippet which should be less than or equal to 10 words. If the text does not contain any code then you will just return false.\n"},
+          {text: "You will act as codeChecker. your main job is to analyse the input text. If the input text contains code of any type, you will segregate the code from it and return the following: isCodPresent:true , code and shortName where shortName will be a short name given to the code snippet which should be less than or equal to 10 words. If the text does not contain any code but can be converted to a piece of code then return the code and a shortname for that chunk of code. If the instructions are not clear you can ignore the text and just return the false\n"},
         ],
       },
       {

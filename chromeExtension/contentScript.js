@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       sendResponse({response:"Error in setTimeout function"});
     }
     return true;
-  } else if(request.task==="invalidCodeSnippet"){ // alert for invalid code snippet :: ***** will change later *****
+  } else if(request.task==="noCodeSnippetFound"){ // alert for invalid code snippet :: ***** will change later *****
     try {
       alert("Please select the code snippet to store in firestore!");
     } catch (error) {

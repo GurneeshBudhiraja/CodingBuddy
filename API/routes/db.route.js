@@ -55,7 +55,7 @@ router.post("/addsnippet",async (req,res)=>{
             if(!resp) {
                 return res.status(400).json({isCodePresent: false});
             };
-
+            if(!resp["id"]) return res.status(500).json({"error :: addsnippet route": "Error while storing the code snippet"});
             return res.status(200).json({resp: resp["id"]});
         }
     } catch (error) {

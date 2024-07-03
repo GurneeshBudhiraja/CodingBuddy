@@ -7,9 +7,11 @@ let startTimer; // timer to check the visited URL after 20 seconds
 
 // -------- Start :: Adding Message Listeners :: Start ------------
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    console.log("From content script message", request);
+    console.log("From content script message onMessage listener", request);
     if (request.type === "emailSignIn") {
         chrome.tabs.create({ url: "./login/login.html" });
+    } else if(request.type==="emailSignUp"){
+      chrome.tabs.create({ url: "./signup/signup.html" });
     } else if(request.task==="irrelevantURL"){
       console.log("Background.js :: The URL is irrelevant. Exiting the tab",request);
       if(request.didExit) {
@@ -226,7 +228,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const data = await response.json();
       console.log(data);
       if(data["isCodePresent"]===false){
-        chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+        chrome.tabs.sendMessage(tab.id, {task:"noCodeSnippetFound"});
         return;
       }
       chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});

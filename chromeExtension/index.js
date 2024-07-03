@@ -5,6 +5,7 @@ let userGoal = null;
 console.log("Hello from index.js!");
 
 const signInButton = document.getElementById("signInWithEmail");
+const signUpButton = document.getElementById("signUpWithEmail");
 
 (async () => {
   const localStorage = await chrome.storage.sync.get(["uid", "accessToken"]);
@@ -66,9 +67,12 @@ document.querySelector("#submitGoal").addEventListener("click", async () => {
 
 signInButton.addEventListener("click", () => {
   console.log("Sign in with email button clicked");
-  chrome.runtime.sendMessage({ type: "emailSignIn" }, (resp) => {
-    alert("Response from background.js: " + resp);
-  });
+  chrome.runtime.sendMessage({ type: "emailSignIn" });
+});
+
+signUpButton.addEventListener("click", () => {
+  console.log("Sign up with email button clicked");
+  chrome.runtime.sendMessage({ type: "emailSignUp" });
 });
   
 document.querySelector("#submitGoal").addEventListener("click", async () => {

@@ -4,24 +4,24 @@ import { createAccount, authenticateAccount, getCurrentUser } from '../controlle
 router.post("/signup",async (req,res)=>{
     try {
         const {email,password} = req.body;
-        
+        if(!email || !password) throw new Error("Please enter email and password");
         if(email && password){
             const user = await createAccount(email,password);
-            
-            res.status(200).json({user:user});
+            const {uid,accessToken}  = user.user;
+            res.status(200).json({message:"204",uid,accessToken});
         } else {
-            res.status(400).json({error:"Please enter email and password"});
+            res.status(400).json({error:"Please enter email and password",message:"400"});
         }
     } catch (error) {
-        console.log(error);
-        res.status(500).json({error:error});
+        console.log(error.message);
+        res.status(500).json({error:error.message,message:"500"});
     }
 })
 
 router.post("/login",async(req,res)=>{
     try {
         const {email,password} = req.body;
-        
+        if(!email || !password) throw new Error("Please enter email and password");
         if(email && password){
             const user = await authenticateAccount(email,password);
             const {uid,accessToken}  = user.user;
@@ -30,7 +30,7 @@ router.post("/login",async(req,res)=>{
             res.status(400).json({error:"Please enter email and password", message:"400"});
         }
     } catch (error) {
-        res.status(500).json({error:error, message:"500"});
+        res.status(500).json({error:error.message, message:"500"});
     }
 })
 
