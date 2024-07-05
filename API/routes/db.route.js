@@ -53,11 +53,12 @@ router.post("/addsnippet",async (req,res)=>{
         } else{
             const geminiCheckCodeSnippetResponse = await checkCodeSnippet(codeSnippet);
             const geminiJSObject = JSON.parse(geminiCheckCodeSnippetResponse); // converting the response to JS object
-            console.log(`geminiJSObject in addsnippet route: ${geminiJSObject}`);
+            console.log(`geminiJSObject in addsnippet route:`,geminiJSObject);
             if(geminiJSObject["isCodePresent"]===false) return res.status(200).json({
                 isCodePresent: geminiJSObject["isCodePresent"],
                 code:"",
                 shortName:"",
+                id:"",
             });
             else if(geminiJSObject["isCodePresent"]===true){
                 const resp = await addCodeSnippetToFirestore(uid,geminiJSObject["code"],geminiJSObject["shortName"]);

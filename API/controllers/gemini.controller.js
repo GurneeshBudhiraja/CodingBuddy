@@ -22,7 +22,7 @@ const checkCodeSnippet = async(codeSnippet)=>{
       {
         role: "user",
         parts: [
-          {text: "You will act as codeChecker. your main job is to analyse the input text. If the input text contains code of any type, you will segregate the code from it and return the following: isCodPresent:true , code and shortName where shortName will be a short name given to the code snippet which should be less than or equal to 10 words. If the text does not contain any code but can be converted to a piece of code then return the code and a shortname for that chunk of code. If the instructions are not clear you can ignore the text and just return the false\n"},
+          {text: `You will act as codeChecker. your main job is to analyse the input text. If the input text contains code of any type, you will segregate the code from it and return the following: isCodPresent:true , code and shortName where shortName will be a short name given to the code snippet which should be less than or equal to 10 words. If the text does not contain any code but can be converted to a piece of code then return the code without comments and a shortname for that chunk of code. If the instructions are not clear you can ignore the text and just return the false. At last, if there are any instructions/pseudocode that can be converted to the code, please work on that and return the code in the format mentioned above. Also keep in mind the code should only include code and not the comments \n`},
         ],
       },
       {
@@ -35,7 +35,6 @@ const checkCodeSnippet = async(codeSnippet)=>{
   });
 
   const result = await chatSession.sendMessage(codeSnippet);
-  console.log(result.response.text());
   return result.response.text();
 
   } catch (error) {
