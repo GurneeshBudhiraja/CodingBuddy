@@ -12,14 +12,13 @@ chrome.runtime.onMessage.addListener(async (request,sender,sendResponse)=>{
       sendResponse({response:"Error in setTimeout function"});
     }
     return true;
-  } else if(request.task==="noCodeSnippetFound"){ // alert for invalid code snippet :: ***** will change later *****
+  } else if(request.task==="invalidCodeSnippet"){ // alert for invalid code snippet :: ***** will change later *****
     try {
-      alert("Please select the code snippet to store in firestore!");
+      alert("Text can not be stored in firestore! The text is either not a code snippet or some error occured. Please try again!");
     } catch (error) {
       console.log("Error while showing the invalid code snippet alert box! :: contentScript.js ::",error.message);
     }
-    return true;
-  } else if(request.task==="codeSnippetStored"){ // alert for code snippet stored successfully :: ***** will change later *****
+  } else if(request.task==="validCodeSnippet"){ // alert for code snippet stored successfully :: ***** will change later *****
     alert("Code snippet copied successfully!");
   } else if(request.task==="irrelevantURL"){ // alert for irrelevant URL :: ***** will change the styling of createPopup later *****
     try {

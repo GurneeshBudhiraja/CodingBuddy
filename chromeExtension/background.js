@@ -226,15 +226,24 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }),
       });
       const data = await response.json();
-      console.log(data);
-      // if(data["isCodePresent"]===false){
-      //   chrome.tabs.sendMessage(tab.id, {task:"noCodeSnippetFound"});
-      //   return;
-      // }
-      // chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});
+      if(data.error){
+        chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+        return;
+      }
+      console.log("Data from the server is:", data);
+      // data object destructuring
+      const {isCodePresent, code, shortName, id} = data;
+      if([isCodePresent, code, shortName, id].some((element)=>!element)){
+        chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+      } else if(isCodePresent && code && shortName && id){
+        chrome.tabs.sendMessage(tab.id, {task:"validCodeSnippet", code, shortName, id});
+      }
     }
   } catch (error) {
     console.log("Error copying code snippet:", error.message);
+    chrome.tabs.getCurrent((tab) => {
+      chrome.tabs.sendMessage(tab.id, {task:"invalidCodeSnippet"});
+    });
   }
 });
 
