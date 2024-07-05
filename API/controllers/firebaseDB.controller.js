@@ -40,25 +40,16 @@ export const getGoalFromFirestore = async(uid)=>{
 }
 
 
-export const addCodeSnippetToFirestore = async(uid,codeSnippet)=>{
+export const addCodeSnippetToFirestore = async(uid,code, shortName)=>{
     try {
-        if(!uid || !codeSnippet) throw new Error("uid and codeSnippet are required");
-        const geminiCheckCodeSnippetResponse = await checkCodeSnippet(codeSnippet);
-        const geminiJSObject = JSON.parse(geminiCheckCodeSnippetResponse);
-        console.log("geminiJSObject",geminiJSObject); // will remove later
-
-        if(geminiJSObject["isCodePresent"]===false) return false;
-        else if(geminiJSObject["isCodePresent"]===true){
-            const {code,shortName} = geminiJSObject;
-
-            const data = {
-                uid,
-                code,
-                createdAt: Timestamp.now(),
-                shortName,
-            }
-            return await addDoc(collection(db,"codeSnippets"),data);
-        }
+        if(!uid || !code) throw new Error("uid and codeSnippet are required");
+        const userDocRef = doc(db, "codeSnippetsCollection", uid); // all the snippets will be under copiedCodeSnippets collection
+        const userCodeSnippets = collection(userDocRef, "userCodeSnippets"); // collection for the user's code snippets
+        return await addDoc(userCodeSnippets,{
+            code,
+            createdAt: Timestamp.now(),
+            shortName,
+        });
     } catch (error) {
         return error.message;
     }

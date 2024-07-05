@@ -227,11 +227,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       });
       const data = await response.json();
       console.log(data);
-      if(data["isCodePresent"]===false){
-        chrome.tabs.sendMessage(tab.id, {task:"noCodeSnippetFound"});
-        return;
-      }
-      chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});
+      // if(data["isCodePresent"]===false){
+      //   chrome.tabs.sendMessage(tab.id, {task:"noCodeSnippetFound"});
+      //   return;
+      // }
+      // chrome.tabs.sendMessage(tab.id, {task:"codeSnippetStored"});
     }
   } catch (error) {
     console.log("Error copying code snippet:", error.message);

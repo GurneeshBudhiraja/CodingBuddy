@@ -1,6 +1,6 @@
-import express, { query } from 'express';
+import express from 'express';
 import { addGoalToFirestore, getGoalFromFirestore, addCodeSnippetToFirestore,addVisitedURL,addIdleTimeData } from '../controllers/firebaseDB.controller.js';
-
+import {checkCodeSnippet} from "../controllers/gemini.controller.js";
 
 const router = express.Router();
 
@@ -51,15 +51,27 @@ router.post("/addsnippet",async (req,res)=>{
         if(!uid || !codeSnippet){
             return res.status(400).json({"error :: addsnippet route": "uid and codeSnippet are required"});
         } else{
-            const resp = await addCodeSnippetToFirestore(uid,codeSnippet);
-            if(!resp) {
-                return res.status(400).json({isCodePresent: false});
-            };
-            if(!resp["id"]) return res.status(500).json({"error :: addsnippet route": "Error while storing the code snippet"});
-            return res.status(200).json({resp: resp["id"]});
+            const geminiCheckCodeSnippetResponse = await checkCodeSnippet(codeSnippet);
+            const geminiJSObject = JSON.parse(geminiCheckCodeSnippetResponse); // converting the response to JS object
+            console.log(`geminiJSObject in addsnippet route: ${geminiJSObject}`);
+            if(geminiJSObject["isCodePresent"]===false) return res.status(200).json({
+                isCodePresent: geminiJSObject["isCodePresent"],
+                code:"",
+                shortName:"",
+            });
+            else if(geminiJSObject["isCodePresent"]===true){
+                const resp = await addCodeSnippetToFirestore(uid,geminiJSObject["code"],geminiJSObject["shortName"]);
+                if(!resp["id"]) throw new Error("Error adding code snippet to firestore");
+                return res.status(200).json({
+                    isCodePresent: true,
+                    code: geminiJSObject["code"] || "",
+                    shortName: geminiJSObject["shortName"] || "",
+                    id:resp.id,
+                });
+            }
         }
     } catch (error) {
-        return res.status(500).json({"error :: addsnippet route": error.message});
+        return res.status(500).json({error: `error :: db route :: addsnippet route :: ${error.message}`});
     }
 });
 
