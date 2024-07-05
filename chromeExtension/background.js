@@ -3,8 +3,6 @@ let tabURL = undefined; // current tabURL
 const visitedURLs = []; // list of visited URLs
 let startTimer; // timer to check the visited URL after 20 seconds
 
-
-
 // -------- Start :: Adding Message Listeners :: Start ------------
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     console.log("From content script message onMessage listener", request);
@@ -16,7 +14,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       console.log("Background.js :: The URL is irrelevant. Exiting the tab",request);
       if(request.didExit) {
         request["exitTime"] = new Date().toLocaleString();
-        chrome.tabs.remove(tabID);
+        await getCurrentTab().then((tab)=>{
+          chrome.tabs.remove(tab.id);
+        });
       } else{
         request["stayTime"] = new Date().toLocaleString();
       }
@@ -249,10 +249,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 // ------ End :: Logic for context menus :: End -------
 
-//  ------- Start :: Logic for the idle time on the browser :: Start -------
+// --- Start :: utils function for the background script :: Start ---
 
+function getCurrentTab(){
+  return new Promise((resolve,reject)=>{
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+      resolve(tabs[0]);
+    });
+  });
+}
 
-
-
-
-//  ------- End :: Logic for the idle time on the browser :: End -------
+// --- End :: utils function for the background script :: End ---
